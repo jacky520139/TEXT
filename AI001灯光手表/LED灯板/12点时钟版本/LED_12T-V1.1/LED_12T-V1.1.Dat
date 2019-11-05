@@ -1,0 +1,19 @@
+Field=Comment~String~Comment~100|Field=Description~String~Description~100|Field=Designator~String~Designator~100|Field=Footprint~String~Footprint~100|Field=LibRef~String~LibRef~100|Field=Quantity~Integer~Quantity~100|ReportField=Currency~<none>|ReportField=ProductionQuantity~1|ReportField=ProjectFileName~LED_12T-V1.1.PrjPCB|ReportField=ProjectFullPath~E:\卓伦\工作项目\WATCH\电路\LED灯板\12点时钟版本\LED_12T-V1.1\LED_12T-V1.1.PrjPCB|ReportField=Title~Bill of Materials For Project [LED_12T-V1.1.PrjPCB] (No PCB Document Selected)|ReportField=TotalQuantity~39|ReportField=ReportTime~11:50:07|ReportField=ReportDate~2019/10/23|ReportField=ReportDateTime~2019/10/23 11:50:07|ReportField=OutputName~Bill of Materials|ReportField=OutputType~BOM_PartType|ReportField=GeneratorName~BOM|ReportField=GeneratorDescription~Bill of Materials|ReportField=VariantName~None|ReportField=Address1~|ReportField=Address2~|ReportField=Address3~|ReportField=Address4~|ReportField=ApprovedBy~|ReportField=Author~|ReportField=CheckedBy~|ReportField=CompanyName~|ReportField=CurrentDate~2019/10/23|ReportField=CurrentTime~11:50:06|ReportField=Date~|ReportField=DocumentFullPathAndName~E:\卓伦\工作项目\WATCH\电路\LED灯板\12点时钟版本\LED_12T-V1.1\LED_12T-V1.1.SchDoc|ReportField=DocumentName~LED_12T-V1.1.SchDoc|ReportField=DocumentNumber~|ReportField=DrawnBy~|ReportField=Engineer~|ReportField=ImagePath~|ReportField=ModifiedDate~2019/10/19|ReportField=Organization~|ReportField=ProjectName~LED_12T-V1.1.PrjPCB|ReportField=Revision~|ReportField=Rule~|ReportField=SheetNumber~|ReportField=SheetTotal~|ReportField=Time~|ReportField=Title~|ReportField=DataSourceFileName~LED_12T-V1.1.PrjPCB|ReportField=DataSourceFullPath~E:\卓伦\工作项目\WATCH\电路\LED灯板\12点时钟版本\LED_12T-V1.1\LED_12T-V1.1.PrjPCB
+测试点||3V3, CLK, DAT, GND, RESET, RXD, TXD|测试点|测试点|7
+104||C1|0603P|C|1
+2.2uF|Capacitor|C6|0603_C|Cap|1
+104|Capacitor|C18, C19|0402_C|Cap|2
+SW-02||K2|四向滚珠开关|SW-02|1
+LED||LED1, LED2, LED3, LED4, LED5, LED6, LED7, LED8, LED9, LED10, LED11|0402_LED|LED|11
+R_G_LED||LED12|0603_R_G_LED|R_G_LED|1
+BAT|Header, 2-Pin|P1|SH1.0-2P|Header 2|1
+BAT|Header, 2-Pin|P5|CR2450|Header 2|1
+2N3904|NPN General Purpose Amplifier|Q1|SOT-23|2N3904|1
+1K||R1, R4, R5, R22|0402_R|R|4
+1K||R2|0603_R|R|1
+100K||R3|0402_R|R|1
+1M||R6|0402_R|R|1
+4.7K||R13, R14|0402_R|R|2
+KEY_M||RE1|滚珠开关12*3.|KEY_M|1
+N76E003||U2|STSOP20|N76E003|1
+SC7A21||U3|LGA-12-2*2*1|SC7A21|1

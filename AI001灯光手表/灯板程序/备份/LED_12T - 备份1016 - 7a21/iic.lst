@@ -1,0 +1,363 @@
+C51 COMPILER V9.52.0.0   IIC                                                               10/16/2019 17:44:24 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE IIC
+OBJECT MODULE PLACED IN ..\iic.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Code\iic.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..\li
+                    -b;..\Common;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\iic.lst) TABS(2) OBJECT(..\iic.obj)
+
+line level    source
+
+   1          
+   2          
+   3          #include "ALL_Includes.h"
+   4          
+   5          #define DELAY1_TIME    10
+   6          #define FALSE          0
+   7          #define TRUE           1
+   8          /********** Function Definition************/
+   9          //void Timer0_DELAY1_ms(int ms)
+  10          //{
+  11          //   int i;                              // millisecond counter
+  12          
+  13          //   TCON  &= ~0x30;                     // STOP Timer0 and clear overflow flag
+  14          //   TMOD  &= ~0x0f;                     // configure Timer0 to 16-bit mode
+  15          //   TMOD  |=  0x01;
+  16          //   CKCON |=  0x08;                     // Timer0 counts SYSCLKs
+  17          
+  18          //   for (i = 0; i < ms; i++) {          // count milliseconds
+  19          //      TR0 = 0;                         // STOP Timer0
+  20          //      TH0 = (-SYSCLK/1000) >> 8;       // set Timer0 to overflow in 1ms
+  21          //      TL0 = -SYSCLK/1000;
+  22          //      TR0 = 1;                         // START Timer0
+  23          //      while (TF0 == 0);                // wait for overflow
+  24          //      TF0 = 0;                         // clear overflow indicator
+  25          //   }
+  26          //}
+  27          
+  28          
+  29          
+  30          
+  31            void DELAY1(unsigned int t) /**/
+  32            {
+  33   1            while(t != 0)
+  34   1                t--;
+  35   1        }
+  36          
+  37          
+  38            void I2C_Start(void)
+  39            {
+  40   1            /**/
+  41   1            SDA = 1;
+  42   1            SCL = 1;
+  43   1            DELAY1(DELAY1_TIME);
+  44   1          DELAY1(DELAY1_TIME);
+  45   1            SDA = 0;
+  46   1            DELAY1(DELAY1_TIME);
+  47   1          DELAY1(DELAY1_TIME);
+  48   1          DELAY1(DELAY1_TIME);
+  49   1            SCL = 0;
+  50   1            DELAY1(DELAY1_TIME);
+  51   1        }
+  52          
+  53          
+  54            void I2C_Stop(void)
+C51 COMPILER V9.52.0.0   IIC                                                               10/16/2019 17:44:24 PAGE 2   
+
+  55            {
+  56   1            /**/
+  57   1            SDA = 0;
+  58   1            SCL = 1;
+  59   1            DELAY1(DELAY1_TIME);
+  60   1            SDA = 1;
+  61   1            DELAY1(DELAY1_TIME);
+  62   1            //SCL=0;
+  63   1            DELAY1(DELAY1_TIME);
+  64   1          SCL = 1;/*new*/
+  65   1        }
+  66          
+  67          
+  68            void SEND_0(void)   /* new*/
+  69            {
+  70   1            /**/
+  71   1            SDA = 0;
+  72   1            SCL = 0;
+  73   1            DELAY1(DELAY1_TIME);
+  74   1          DELAY1(DELAY1_TIME);
+  75   1            SCL = 1;
+  76   1            DELAY1(DELAY1_TIME);
+  77   1          DELAY1(DELAY1_TIME);
+  78   1            SCL = 0;
+  79   1            DELAY1(DELAY1_TIME);
+  80   1          DELAY1(DELAY1_TIME);
+  81   1            //DELAY1(DELAY1_TIME);
+  82   1        }
+  83          
+  84          
+  85            void SEND_1(void)  /* new*/
+  86            {
+  87   1            /**/
+  88   1            SDA = 1;
+  89   1            SCL = 0;
+  90   1            DELAY1(DELAY1_TIME);
+  91   1          DELAY1(DELAY1_TIME);
+  92   1            SCL = 1;
+  93   1            DELAY1(DELAY1_TIME);
+  94   1          DELAY1(DELAY1_TIME);
+  95   1            SCL = 0;
+  96   1            DELAY1(DELAY1_TIME);
+  97   1          DELAY1(DELAY1_TIME);
+  98   1            //DELAY1(DELAY1_TIME);
+  99   1        }
+ 100          
+ 101          
+ 102            bit Check_Acknowledge(void)
+ 103            {
+ 104   1            /**/
+ 105   1            bit ack;
+ 106   1      
+ 107   1            SDA = 1;
+ 108   1          DELAY1(DELAY1_TIME);
+ 109   1          DELAY1(DELAY1_TIME);
+ 110   1            SCL = 1;
+ 111   1            DELAY1(DELAY1_TIME);
+ 112   1          DELAY1(DELAY1_TIME);
+ 113   1            ack = SDA;
+ 114   1            DELAY1(DELAY1_TIME);
+ 115   1            SCL = 0;
+ 116   1          DELAY1(DELAY1_TIME);
+C51 COMPILER V9.52.0.0   IIC                                                               10/16/2019 17:44:24 PAGE 3   
+
+ 117   1            //DELAY1(DELAY1_TIME);
+ 118   1            if(ack == 1)
+ 119   1                return FALSE;
+ 120   1            return TRUE;
+ 121   1        }
+ 122          
+ 123          
+ 124            void WriteI2CByte(char b) //reentrant
+ 125            {
+ 126   1            /**/
+ 127   1            char i;
+ 128   1            for(i = 0; i < 8; i++)
+ 129   1                if((b << i) & 0x80)
+ 130   1                    SEND_1();
+ 131   1                else
+ 132   1                    SEND_0();
+ 133   1        }
+ 134          
+ 135          
+ 136          
+ 137            char ReadI2CByte(void) //reentrant
+ 138            {
+ 139   1            /**/
+ 140   1            char b = 0,i;
+ 141   1            for(i = 0; i < 8; i++)
+ 142   1            {
+ 143   2            DELAY1(DELAY1_TIME);
+ 144   2            SDA = 1;    /**/
+ 145   2            DELAY1(DELAY1_TIME);
+ 146   2            DELAY1(DELAY1_TIME);
+ 147   2            SCL = 1;    /**/
+ 148   2            DELAY1(DELAY1_TIME);
+ 149   2            DELAY1(DELAY1_TIME);
+ 150   2            F0 = SDA;
+ 151   2            DELAY1(DELAY1_TIME);
+ 152   2            DELAY1(DELAY1_TIME);
+ 153   2            SCL = 0;
+ 154   2            if(F0 == 1)
+ 155   2                {
+ 156   3                    b = b << 1;
+ 157   3                    b = b | 0x01;
+ 158   3                }
+ 159   2            else
+ 160   2                b = b << 1;
+ 161   2            }
+ 162   1            return b;
+ 163   1        }
+ 164          
+ 165          
+ 166          /********************/
+ 167          void Write_One_Byte(char addr, char thedata)
+ 168          {
+ 169   1              bit acktemp = 1;
+ 170   1              /*write a byte to mem*/
+ 171   1              I2C_Start();
+ 172   1              WriteI2CByte(0x8c);
+ 173   1              acktemp = Check_Acknowledge();
+ 174   1          WriteI2CByte(addr);/*address*/
+ 175   1              acktemp = Check_Acknowledge();
+ 176   1              WriteI2CByte(thedata);/*thedata*/
+ 177   1              acktemp = Check_Acknowledge();
+ 178   1              I2C_Stop();
+C51 COMPILER V9.52.0.0   IIC                                                               10/16/2019 17:44:24 PAGE 4   
+
+ 179   1      }
+ 180          
+ 181          
+ 182          void Write_One_Byte_iicaddr(char iicchar, char addr, char thedata)
+ 183          {
+ 184   1              bit acktemp = 1;
+ 185   1              /*write a byte to mem*/
+ 186   1              I2C_Start();
+ 187   1              WriteI2CByte(iicchar);
+ 188   1              acktemp = Check_Acknowledge();
+ 189   1          WriteI2CByte(addr);/*address*/
+ 190   1              acktemp = Check_Acknowledge();
+ 191   1              WriteI2CByte(thedata);/*thedata*/
+ 192   1              acktemp = Check_Acknowledge();
+ 193   1              I2C_Stop();
+ 194   1      }
+ 195          
+ 196          
+ 197          
+ 198          void Write_A_Page(char *buffer, char iicaddr, unsigned char length)
+ 199          {
+ 200   1              bit acktemp = 1;
+ 201   1      //        bit wrtmp;
+ 202   1              int i;
+ 203   1              /*write a page to at24c02*/
+ 204   1              I2C_Start();
+ 205   1              WriteI2CByte(iicaddr);
+ 206   1              acktemp=Check_Acknowledge();
+ 207   1              //WriteI2CByte(addr);/*address*/
+ 208   1              //acktemp=Check_Acknowledge();
+ 209   1              for(i = 0; i < length; i++)
+ 210   1              {
+ 211   2                WriteI2CByte(buffer[i]);
+ 212   2                if(!Check_Acknowledge())
+ 213   2                    {
+ 214   3                        I2C_Stop();
+ 215   3                    }
+ 216   2               }
+ 217   1      
+ 218   1              I2C_Stop();
+ 219   1      
+ 220   1      
+ 221   1      }
+ 222          
+ 223          
+ 224          void Write_A_Page_Discont_Addr(char *buffer, char iicaddr, unsigned char length)
+ 225          {
+ 226   1              bit acktemp = 1;
+ 227   1      //        bit wrtmp;
+ 228   1              int i;
+ 229   1              /*write a page to at24c02*/
+ 230   1          for(i = 0; i < length; i++)
+ 231   1              {
+ 232   2                I2C_Start();
+ 233   2                WriteI2CByte(iicaddr);//device address
+ 234   2                acktemp = Check_Acknowledge();
+ 235   2              if(~acktemp)
+ 236   2              while(1);
+ 237   2                WriteI2CByte(buffer[2 * i]);//reg address
+ 238   2                acktemp = Check_Acknowledge();
+ 239   2              if(~acktemp)
+ 240   2              while(1);
+C51 COMPILER V9.52.0.0   IIC                                                               10/16/2019 17:44:24 PAGE 5   
+
+ 241   2              WriteI2CByte(buffer[2 * i + 1]);
+ 242   2              acktemp = Check_Acknowledge();
+ 243   2              if(~acktemp)
+ 244   2              while(1);
+ 245   2              I2C_Stop();
+ 246   2              DELAY1(1000);
+ 247   2               }      
+ 248   1      }
+ 249          
+ 250          void Read_A_Page_Discont_Addr(char *buffer, char device_addr, unsigned char length)
+ 251          {
+ 252   1              bit acktemp = 1;
+ 253   1          char mydata;
+ 254   1              int i;
+ 255   1              /*write a page to at24c02*/
+ 256   1          for(i = 0; i < length; i++)
+ 257   1              {
+ 258   2              I2C_Start();
+ 259   2              WriteI2CByte(device_addr);
+ 260   2              acktemp = Check_Acknowledge();
+ 261   2              WriteI2CByte(buffer[2 * i + 0]);/*address*/
+ 262   2              acktemp = Check_Acknowledge();
+ 263   2              I2C_Start();
+ 264   2              WriteI2CByte(device_addr + 0x01);
+ 265   2              acktemp = Check_Acknowledge();
+ 266   2              mydata  = ReadI2CByte();
+ 267   2              acktemp = Check_Acknowledge();
+ 268   2              I2C_Stop();
+ 269   2              buffer[2 * i + 1] = mydata;
+ 270   2              DELAY1(1000);
+ 271   2               }      
+ 272   1      }
+ 273          
+ 274          
+ 275          
+ 276          char Read_One_Byte(char device_addr, char reg_addr)
+ 277          {         
+ 278   1          bit acktemp = 1;
+ 279   1              char mydata;
+ 280   1               /*read a byte from mem*/
+ 281   1              I2C_Start();
+ 282   1              WriteI2CByte(device_addr);
+ 283   1              acktemp = Check_Acknowledge();
+ 284   1              WriteI2CByte(reg_addr);/*address*/
+ 285   1              acktemp = Check_Acknowledge();
+ 286   1              I2C_Start();
+ 287   1              WriteI2CByte(device_addr + 0x01);
+ 288   1              acktemp = Check_Acknowledge();
+ 289   1      
+ 290   1              mydata  = ReadI2CByte();
+ 291   1              acktemp = Check_Acknowledge();
+ 292   1          I2C_Stop();
+ 293   1              return mydata;
+ 294   1              
+ 295   1      }
+ 296          
+ 297          
+ 298          //
+ 299            void Read_N_Bytes(char device_addr, char *buffer, char n, char addr)
+ 300            {
+ 301   1              bit acktemp = 1;
+ 302   1              int i = 0;
+C51 COMPILER V9.52.0.0   IIC                                                               10/16/2019 17:44:24 PAGE 6   
+
+ 303   1               /*read 8 bytes from mem*/           
+ 304   1              I2C_Start();
+ 305   1              WriteI2CByte(device_addr);
+ 306   1              acktemp = Check_Acknowledge();
+ 307   1              WriteI2CByte(addr);/*address*/
+ 308   1              acktemp = Check_Acknowledge();
+ 309   1              I2C_Start();
+ 310   1              WriteI2CByte(device_addr + 0x01);
+ 311   1              acktemp = Check_Acknowledge();
+ 312   1      
+ 313   1      
+ 314   1              for(i = 0; i < n; i++)
+ 315   1              {
+ 316   2                    buffer[i] = ReadI2CByte();
+ 317   2                    if(i != n - 1)
+ 318   2                        SEND_0();    /*¡¤¡é?¨ª¨®|¡äe*/
+ 319   2                    else
+ 320   2                        SEND_1();    /*¡¤¡é?¨ª¡¤?¨®|¡äe*/
+ 321   2              }
+ 322   1      
+ 323   1            I2C_Stop();
+ 324   1        }
+ 325          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1192    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      29
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       8
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

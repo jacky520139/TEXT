@@ -1,0 +1,50 @@
+Removed Pin From Net: NetName=KEY Pin=R15-1
+Removed Pin From Net: NetName=BAT Pin=R15-2
+Change Component DesignItemId : Designator=C1 Old DesignItemId= New DesignItemId=C
+Change Component DesignItemId : Designator=RE1 Old DesignItemId= New DesignItemId=KEY_M
+Change Component DesignItemId : Designator=U2 Old DesignItemId= New DesignItemId=N76E003
+Change Component DesignItemId : Designator=R1 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=R2 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=R3 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=R4 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=R5 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=R13 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=R14 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=R22 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=LED12 Old DesignItemId= New DesignItemId=R_G_LED
+Change Component DesignItemId : Designator=U3 Old DesignItemId= New DesignItemId=SC7A21
+Change Component DesignItemId : Designator=BAT Old DesignItemId= New DesignItemId=测试点
+Change Component DesignItemId : Designator=CLK Old DesignItemId= New DesignItemId=测试点
+Change Component DesignItemId : Designator=DAT Old DesignItemId= New DesignItemId=测试点
+Change Component DesignItemId : Designator=GND Old DesignItemId= New DesignItemId=测试点
+Change Component DesignItemId : Designator=RESET Old DesignItemId= New DesignItemId=测试点
+Change Component DesignItemId : Designator=RXD Old DesignItemId= New DesignItemId=测试点
+Change Component DesignItemId : Designator=TXD Old DesignItemId= New DesignItemId=测试点
+Change Component Comment : Designator= Old Comment= New Comment=BAT
+Change Component Designator: OldDesignator= NewDesignator=P5
+Change Component Designator: OldDesignator=BAT NewDesignator=3V3
+Change Component Description : Designator=C6 Old Description=Capac New Description=Capacitor
+Change Component Description : Designator=C18 Old Description=Capac New Description=Capacitor
+Change Component Description : Designator=C19 Old Description=Capac New Description=Capacitor
+Change Component Library : Designator=C1 Old Library=3.5TFTLCD封装库.IntL New Library=3.5TFTLCD封装库.IntLib
+Change Component Library : Designator=RE1 Old Library=Explorer STM32F407封装 New Library=Explorer STM32F407封装库.IntLib
+Change Component Library : Designator=R1 Old Library=Explorer STM32F407封装库.I New Library=Explorer STM32F407封装库.IntLib
+Change Component Library : Designator=R2 Old Library=Explorer STM32F407封装库.I New Library=Explorer STM32F407封装库.IntLib
+Change Component Library : Designator=R3 Old Library=Explorer STM32F407封装库.I New Library=Explorer STM32F407封装库.IntLib
+Change Component Library : Designator=R4 Old Library=Explorer STM32F407封装库.I New Library=Explorer STM32F407封装库.IntLib
+Change Component Library : Designator=R5 Old Library=Explorer STM32F407封装库.I New Library=Explorer STM32F407封装库.IntLib
+Change Component Library : Designator=R13 Old Library=Explorer STM32F407封装库.I New Library=Explorer STM32F407封装库.IntLib
+Change Component Library : Designator=R14 Old Library=Explorer STM32F407封装库.I New Library=Explorer STM32F407封装库.IntLib
+Change Component Library : Designator=R22 Old Library=Explorer STM32F407封装库.IntL New Library=Explorer STM32F407封装库.IntLib
+Change Component Library : Designator=3V3 Old Library=元件 New Library=元件.SCHLIB
+Change Component Library : Designator=CLK Old Library=元件 New Library=元件.SCHLIB
+Change Component Library : Designator=DAT Old Library=元件 New Library=元件.SCHLIB
+Change Component Library : Designator=GND Old Library=元件 New Library=元件.SCHLIB
+Change Component Library : Designator=RESET Old Library=元件 New Library=元件.SCHLIB
+Change Component Library : Designator=RXD Old Library=元件 New Library=元件.SCHLIB
+Change Component Library : Designator=TXD Old Library=元件 New Library=元件.SCHLIB
+Change Class Name : Old Net Name=LED_12T New Net Name=LED_12T-V1.1
+Added Member To Class: ClassName=LED_12T-V1.1 Member=Component 3V3 测试点
+Added Member To Class: ClassName=LED_12T-V1.1 Member=Component P5 BAT
+Added Member To Class: ClassName=LED_12T-V1.1 Member=Component U2 N76E003
+Added Room: Name=LED_12T-V1.1

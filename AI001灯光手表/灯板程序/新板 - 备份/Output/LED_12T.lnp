@@ -1,0 +1,15 @@
+"..\Output\STARTUP.obj",
+"..\Output\System.obj",
+"..\Output\main.obj",
+"..\Output\adc.obj",
+"..\Output\eeprom.obj",
+"..\Output\i2c_software.obj",
+"..\Output\registers.obj",
+"..\Output\SC7A21.obj",
+"..\Output\UART.obj",
+"..\Output\Work.obj",
+"..\Output\SL_SC7A21_Application.obj",
+"..\Output\SL_Sc7a21_Driver.obj" 
+TO "..\Output\LED_12T" 
+
+PRINT("..\LST\LED_12T.map") DISABLEWARNING (16) 

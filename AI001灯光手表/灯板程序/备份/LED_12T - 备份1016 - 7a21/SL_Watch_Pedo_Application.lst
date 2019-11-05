@@ -1,0 +1,105 @@
+C51 COMPILER V9.52.0.0   SL_WATCH_PEDO_APPLICATION                                         10/16/2019 17:44:25 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE SL_WATCH_PEDO_APPLICATION
+OBJECT MODULE PLACED IN ..\SL_Watch_Pedo_Application.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Code\SL_Watch_Pedo_Application.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEE
+                    -D) BROWSE INCDIR(..\lib;..\Common;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\SL_Watch_Pedo_Application.lst) TABS(2) OBJ
+                    -ECT(..\SL_Watch_Pedo_Application.obj)
+
+line level    source
+
+   1          
+   2          
+   3          #include "ALL_Includes.h"
+   4          
+   5          #define SL_Sensor_Algo_Release_Enable 1
+   6          #if SL_Sensor_Algo_Release_Enable==0
+              extern signed short          SL_DEBUG_DATA[10][128];
+              extern unsigned char         SL_DEBUG_DATA_LEN;
+              #endif
+  10          
+  11          #define SL_SC7A20_SPI_IIC_MODE  1
+  12          /***SL_SC7A20_SPI_IIC_MODE==0  :SPI*******/
+  13          /***SL_SC7A20_SPI_IIC_MODE==1  :IIC*******/
+  14          
+  15          /**Please modify the following parameters according to the actual situation**/
+  16          signed char SL_SC7A20_PEDO_INIT(void)
+  17          {
+  18   1          unsigned char  status=0;
+  19   1      /*****if use spi mode please config first******/    
+  20   1      #if SL_SC7A20_SPI_IIC_MODE == 0//spi
+                  status=SL_SC7A20_Driver_Init(1,0x04);//iic mode pull up config 
+                //init sensor
+                status=SL_SC7A20_Driver_Init(0,0x04);//spi or iic select
+              #else
+  25   1        status=SL_SC7A20_Driver_Init(1,0x00);//spi or iic select   
+  26   1      #endif
+  27   1          /**********set pedo sensitivity**********/
+  28   1          SL_PEDO_TH_SET(26,12,0);
+  29   1          
+  30   1        return status;
+  31   1      }
+  32          //unsigned char sl_pedo_flag=0;
+  33          //signed short  sl_pedo_data[32];
+  34          static unsigned int  SL_STEP      = 0;
+  35          unsigned int  SL_SC7A20_PEDO_ALGO(void)
+  36          {
+  37   1      #if SL_Sensor_Algo_Release_Enable==0
+                unsigned char         sl_i;
+              #endif
+  40   1        signed short          SC7A20_XYZ_Buf[3][16];
+  41   1        unsigned char         SC7A20_FIFO_NUM;
+  42   1      
+  43   1          /*******read fifo data******/
+  44   1        SC7A20_FIFO_NUM=SL_SC7A20_Read_FIFO();
+  45   1          /*******get pedo value******/
+  46   1          SL_STEP= SL_Watch_Pedo_Algo();
+  47   1          /*******get accel orginal data and length*******/
+  48   1          SC7A20_FIFO_NUM=SL_SC7A20_GET_FIFO_Buf(&SC7A20_XYZ_Buf[0][0],&SC7A20_XYZ_Buf[1][0],&SC7A20_XYZ_Buf[2][
+             -0]);
+  49   1      
+  50   1          if(SL_STEP>200)
+  51   1          {
+  52   2              /**reset pedo value**/
+C51 COMPILER V9.52.0.0   SL_WATCH_PEDO_APPLICATION                                         10/16/2019 17:44:25 PAGE 2   
+
+  53   2              SL_Pedo_ResetStepCount();
+  54   2          }
+  55   1      
+  56   1      #if SL_Sensor_Algo_Release_Enable==0
+                  for(sl_i=0;sl_i<SC7A20_FIFO_NUM;sl_i++)
+                  {       
+                      SL_DEBUG_DATA[0][sl_i]=SC7A20_XYZ_Buf[0][sl_i];
+                      SL_DEBUG_DATA[1][sl_i]=SC7A20_XYZ_Buf[1][sl_i];
+                      SL_DEBUG_DATA[2][sl_i]=SC7A20_XYZ_Buf[2][sl_i];
+                      SL_DEBUG_DATA[3][sl_i]=SL_STEP;
+              //        SL_DEBUG_DATA[4][sl_i]=sl_pedo_flag;
+              //        SL_DEBUG_DATA[5][sl_i]=sl_pedo_data[sl_i];  
+                  }
+                  SL_DEBUG_DATA_LEN=SC7A20_FIFO_NUM;
+              #endif
+  68   1          
+  69   1          return SL_STEP;
+  70   1      }
+  71          
+  72          
+  73          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    120    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      2      98
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

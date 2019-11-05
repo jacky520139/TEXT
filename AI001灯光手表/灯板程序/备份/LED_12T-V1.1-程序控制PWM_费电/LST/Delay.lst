@@ -1,0 +1,13 @@
+C51 COMPILER V9.54   DELAY                                                                 01/07/2019 18:01:57 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE DELAY
+OBJECT MODULE PLACED IN .\Output\Delay.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\Common\Delay.c OPTIMIZE(7,SPEED) BROWSE INCDIR(..\..\Include;.\hea
+                    -d) DEFINE(FOSC_160000) DEBUG OBJECTEXTEND PRINT(.\LST\Delay.lst) TABS(2) OBJECT(.\Output\Delay.obj)
+
+line level    source
+
+*** ERROR C318 OF ..\..\Common\Delay.c: can't open file '..\..\Common\Delay.c'
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  1 ERROR(S)

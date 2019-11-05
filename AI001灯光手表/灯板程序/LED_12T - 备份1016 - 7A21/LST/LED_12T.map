@@ -1,0 +1,19 @@
+LX51 LINKER/LOCATER V4.66.1.0                                                           10/16/2019  15:31:47  PAGE 1
+
+
+LX51 LINKER/LOCATER V4.66.1.0, INVOKED BY:
+C:\KEIL_V5\C51\BIN\LX51.EXE .\Output\STARTUP.obj, .\Output\System.obj, .\Output\main.obj, .\Output\adc.obj, .\Output\eep
+>> rom.obj, .\Output\Work.obj, .\Output\UART.obj, .\Output\SC7A21.obj, .\Output\i2c_software.obj, .\Output\SL_Watch_Pedo
+>> _Application.obj, .\Output\iic.obj, .\LIB\SL_Watch_Pedo_Algorithm.lib TO .\Output\LED_12T PRINT (.\LST\LED_12T.map) D
+>> ISABLEWARNING (16)
+
+
+
+
+*** ERROR L104: MULTIPLE PUBLIC DEFINITIONS
+    SYMBOL:  _delay
+    MODULE:  .\Output\iic.obj (IIC)
+   DEFINED:  .\Output\i2c_software.obj (I2C_SOFTWARE)
+
+*** ERROR L218: NOT AN OBJECT FILE
+    FILE: .\LIB\SL_Watch_Pedo_Algorithm.lib

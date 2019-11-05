@@ -1,0 +1,414 @@
+C51 COMPILER V9.54   LT8920                                                                03/26/2019 15:13:05 PAGE 1   
+
+
+C51 COMPILER V9.54, COMPILATION OF MODULE LT8920
+OBJECT MODULE PLACED IN .\Output\LT8920.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE Code\LT8920.C LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..\..
+                    -\Include;.\head;.\Common) DEFINE(FOSC_160000) DEBUG PRINT(.\LST\LT8920.lst) TABS(2) OBJECT(.\Output\LT8920.obj)
+
+line level    source
+
+   1          #include "ALL_Includes.h"
+   2          
+   3          //       读写FIFO 16位缓存器          //
+   4          unsigned char RegH;
+   5          unsigned char RegL;              //Used to store the Registor Value which is read.
+   6          //#define  RST        = P1^1;
+   7          #define SPI_SS       P11          
+   8          #define SPI_CLK      P14 
+   9          #define SPI_MOSI          P13
+  10          #define SPI_MISO          P12
+  11          
+  12          #define LED11          P10
+  13          #define LED22          P15
+  14          //#define PKT        = P3^2;
+  15          
+  16          
+  17          /*****************************************/
+  18          // SPI Write and Read ,as well as Read8  // 
+  19          /*****************************************/
+  20          
+  21          void SPI_WriteReg(unsigned char addr, unsigned char H, unsigned char L)
+  22          {
+  23   1        int i;
+  24   1      
+  25   1        SPI_SS = 0;
+  26   1      
+  27   1        for(i = 0; i < 8; ++ i)
+  28   1        {
+  29   2          MOSI = addr & 0x80;
+  30   2      
+  31   2          SPI_CLK = 1;                       //capturing at the down side.
+  32   2          SPI_CLK = 0;
+  33   2      
+  34   2          addr = addr << 1;                    //There is no Delay here. determines the rate of SPI.
+  35   2        }
+  36   1      
+  37   1        for(i = 0; i < 8; ++i)                 //Write H
+  38   1        {
+  39   2          
+  40   2          MOSI = H & 0x80;
+  41   2          SPI_CLK = 1;
+  42   2          SPI_CLK = 0;
+  43   2      
+  44   2          H = H << 1;
+  45   2        }
+  46   1      
+  47   1        for(i = 0; i < 8; ++i)                 //Write L
+  48   1        {  
+  49   2          MOSI = L & 0x80;
+  50   2      
+  51   2          SPI_CLK = 1;
+  52   2          SPI_CLK = 0;
+  53   2      
+  54   2          L = L << 1;
+C51 COMPILER V9.54   LT8920                                                                03/26/2019 15:13:05 PAGE 2   
+
+  55   2        }
+  56   1      
+  57   1        SPI_SS = 1;
+  58   1      }
+  59          
+  60          
+  61          void SPI_ReadReg(unsigned char addr)
+  62          {
+  63   1        int i;
+  64   1        
+  65   1        SPI_SS = 0;
+  66   1        addr += 0x80;                    //when reading a Register,the Address should be added with 0x80.
+  67   1      
+  68   1        for(i = 0; i < 8; ++ i)
+  69   1        {
+  70   2          MOSI = addr & 0x80;
+  71   2      
+  72   2          SPI_CLK = 1;
+  73   2          SPI_CLK = 0;
+  74   2      
+  75   2          addr = addr << 1;                      //Move one bit to the left.
+  76   2        }
+  77   1      
+  78   1        for(i = 0; i < 8; ++ i)
+  79   1        {
+  80   2          SPI_CLK = 1;                         //transmit at the up side.
+  81   2          SPI_CLK = 0;
+  82   2      
+  83   2          RegH = RegH << 1;  
+  84   2          RegH |= MISO;
+  85   2        }
+  86   1      
+  87   1        
+  88   1        
+  89   1        for(i = 0; i < 8; ++ i)
+  90   1        {
+  91   2          SPI_CLK = 1;                         //transmit at the up side.
+  92   2          SPI_CLK = 0;
+  93   2      
+  94   2          RegL = RegL << 1; 
+  95   2          RegL |= MISO;
+  96   2        }
+  97   1      
+  98   1        SPI_SS = 1;
+  99   1      }
+ 100          
+ 101          
+ 102          /***************************************/
+ 103          // LT8900 Initializing Function        //
+ 104          /***************************************/
+ 105          
+ 106          void LT8900_Init(void)
+ 107          {
+ 108   1      
+ 109   1      //    RST  = 0;
+ 110   1      //  Delay_ms(2);
+ 111   1      //  RST  = 1;
+ 112   1      //  Delay_ms(5);
+ 113   1      //  PKT = 1;
+ 114   1      
+ 115   1        SPI_WriteReg( 0, 0x6f, 0xef );
+ 116   1        SPI_WriteReg( 1, 0x56, 0x81 );
+C51 COMPILER V9.54   LT8920                                                                03/26/2019 15:13:05 PAGE 3   
+
+ 117   1        SPI_WriteReg( 2, 0x66, 0x17 );
+ 118   1        SPI_WriteReg( 4, 0x9c, 0xc9 );
+ 119   1        SPI_WriteReg( 5, 0x66, 0x37 );
+ 120   1        SPI_WriteReg( 7, 0x00, 0x00 );                //channel is 2402Mhz
+ 121   1        SPI_WriteReg( 8, 0x6c, 0x90 );
+ 122   1        SPI_WriteReg( 9, 0x48, 0x00 );                  //PA -12.2dbm
+ 123   1        SPI_WriteReg(10, 0x7f, 0xfd );
+ 124   1        SPI_WriteReg(11, 0x00, 0x08 );
+ 125   1        SPI_WriteReg(12, 0x00, 0x00 );
+ 126   1        SPI_WriteReg(13, 0x48, 0xbd );
+ 127   1        SPI_WriteReg(22, 0x00, 0xff );
+ 128   1        SPI_WriteReg(23, 0x80, 0x05 );
+ 129   1        SPI_WriteReg(24, 0x00, 0x67 );
+ 130   1        SPI_WriteReg(25, 0x16, 0x59 );
+ 131   1        SPI_WriteReg(26, 0x19, 0xe0 );
+ 132   1        SPI_WriteReg(27, 0x13, 0x00 );
+ 133   1        SPI_WriteReg(28, 0x18, 0x00 );
+ 134   1        SPI_WriteReg(32, 0x58, 0x00 );
+ 135   1        SPI_WriteReg(33, 0x3f, 0xc7 );
+ 136   1        SPI_WriteReg(34, 0x20, 0x00 );
+ 137   1        SPI_WriteReg(35, 0x0a, 0x00 );            /* 重发次数为9次 一共发送10次*/
+ 138   1      
+ 139   1        SPI_WriteReg(36, 0x03, 0x80 );
+ 140   1        SPI_WriteReg(37, 0x03, 0x80 );
+ 141   1        SPI_WriteReg(38, 0x5a, 0x5a );
+ 142   1        SPI_WriteReg(39, 0x03, 0x80 );
+ 143   1      
+ 144   1        SPI_WriteReg(40, 0x44, 0x02 );
+ 145   1        //SPI_WriteReg(41, 0xb4, 0x00 );                  /*CRC is ON; scramble is OFF; AUTO_ACK is OFF*/
+ 146   1        SPI_WriteReg(41, 0xb8, 0x00 );                      /*CRC is ON; scramble is OFF; AUTO_ACK is ON*/
+ 147   1        
+ 148   1          #ifdef LT8910
+                SPI_WriteReg(42, 0xfd, 0xff );          /*等待RX_ACK时间 255us  62.5KBPS*/
+                  #else
+ 151   1        SPI_WriteReg(42, 0xfd, 0xb0 );          /*等待RX_ACK时间 176us*/
+ 152   1        #endif
+ 153   1        
+ 154   1        SPI_WriteReg(43, 0x00, 0x0f );
+ 155   1      }
+ 156          
+ 157          
+ 158          
+ 159          /*****************************************************/
+ 160          /*   写寄存器突发模式  入口参数 */
+ 161          /*****************************************************/
+ 162          /*
+ 163           void SPIBurst_WriteReg(unsigned char add, unsigned char num)
+ 164          {
+ 165            unsigned char temp;
+ 166            unsigned char i;
+ 167            
+ 168          
+ 169            SPI_SS = 0;
+ 170          
+ 171            for(i = 0; i < 8; ++ i)
+ 172            {
+ 173              MOSI = add & 0x80;
+ 174          
+ 175              SPI_CLK = 1;                       //capturing at the down side.
+ 176              SPI_CLK = 0;
+ 177          
+ 178              add = add << 1;                    //There is no Delay here. determines the rate of SPI.
+C51 COMPILER V9.54   LT8920                                                                03/26/2019 15:13:05 PAGE 4   
+
+ 179            }
+ 180            
+ 181            while(num)                      //一共写入num个bytes，分别为 num, num-1，num-2，num-3...
+ 182            {
+ 183              temp = num;
+ 184              
+ 185              for(i = 0; i < 8; ++i)                 //Write H
+ 186                {
+ 187              
+ 188                  MOSI = temp & 0x80;
+ 189                  SPI_CLK = 1;
+ 190                  SPI_CLK = 0;
+ 191          
+ 192                  temp = temp << 1;
+ 193                }
+ 194          
+ 195              -- num;
+ 196            }
+ 197            
+ 198            SPI_SS = 1;
+ 199          }
+ 200           */
+ 201           u8 index_state;
+ 202           #define TX_DAT1 0x01  //发送数据1      
+ 203          #define TX_DAT2 0x02     //发送数据2
+ 204          #define INT_RX  0x03     //初始化接收模式
+ 205          #define RX_MOD  0x00     //常规接收模式
+ 206          unsigned char RBUF[32];
+ 207           void RF_STAK(void)
+ 208           {bit PKT=0;
+ 209   1         u8 count=0,i,j;
+ 210   1      //#ifdef LT8910
+ 211   1      //  //8910设置成62.5kbps Reg44 地址上配置 1000H, Reg45 配置 0552H， 是 62.5Kbps
+ 212   1      //  SPI_WriteReg(44, 0x10, 0x00);
+ 213   1      //  SPI_WriteReg(45, 0x05, 0x52); 
+ 214   1      //  #endif
+ 215   1        //-----------------
+ 216   1        //读出寄存器的值检查硬件读写时序是否正确
+ 217   1        SPI_ReadReg(40);
+ 218   1        if (RegH==0x44 && RegL==0x02)
+ 219   1        {
+ 220   2      //    LED1_ON();
+ 221   2      //    LED2_ON();
+ 222   2      //    Delay_ms(200);
+ 223   2      //    LED1_OFF();
+ 224   2      //    LED2_OFF();
+ 225   2        }
+ 226   1          //-----------------
+ 227   1          count=0;
+ 228   1          //-----------------
+ 229   1        while (1)
+ 230   1        {
+ 231   2      //      if(time_5ms_flag)
+ 232   2      //        {
+ 233   2      //        Get_KeyValue(&keyvalue);         //cost 50us
+ 234   2      //        time_5ms_flag=FALSE;
+ 235   2      //      
+ 236   2      //      if(count<600)
+ 237   2      //               count++;
+ 238   2      //      if(count==600)
+ 239   2      //        {
+ 240   2      //        LED2_OFF();
+C51 COMPILER V9.54   LT8920                                                                03/26/2019 15:13:05 PAGE 5   
+
+ 241   2      //        LED1_OFF();       
+ 242   2      //        }
+ 243   2      //        }
+ 244   2      //    switch(keyvalue)
+ 245   2      //    {
+ 246   2      //        case (KEY1|KEY_PRESS):
+ 247   2      //            index_state=TX_DAT1;
+ 248   2      //      break;
+ 249   2      
+ 250   2      //      case (KEY2|KEY_PRESS):
+ 251   2      //            index_state=TX_DAT2;
+ 252   2      //      break;
+ 253   2      
+ 254   2      //      default :  break;
+ 255   2      //    }
+ 256   2               SysTimer_Process();
+ 257   2          if(bsystem5Msec)  
+ 258   2          {if(index_state!=TX_DAT1)
+ 259   3            {index_state=TX_DAT1;}
+ 260   3      
+ 261   3               }
+ 262   2          switch(index_state)
+ 263   2          {
+ 264   3              case INT_RX:
+ 265   3                  //设置成数据接收模式
+ 266   3                  SPI_WriteReg(52, 0x80, 0x80);
+ 267   3                  SPI_WriteReg(7, 0x00, 0x80 + 0x20); 
+ 268   3                  index_state=RX_MOD;
+ 269   3            break;
+ 270   3              case RX_MOD:
+ 271   3            //检查是否接收到数据
+ 272   3              SPI_ReadReg(48);
+ 273   3              if((RegL&0x40)==1)
+ 274   3              {PKT=1;}
+ 275   3              else
+ 276   3              {PKT=0;}
+ 277   3              if(PKT == 1)
+ 278   3            {
+ 279   4              i=0;
+ 280   4              SPI_ReadReg(50);
+ 281   4                j=RegH;//读取包长度
+ 282   4              while(i<j)
+ 283   4             {
+ 284   5             //读取数据
+ 285   5             SPI_ReadReg(50);
+ 286   5             RBUF[i++]=RegH;
+ 287   5             RBUF[i++]=RegL;
+ 288   5             if(i==32)
+ 289   5              break;
+ 290   5             }   
+ 291   4              //一旦发生错误，寄存器 Reg48 bit15 位 CRC_ERROR 将被自动置 1，在下次开始 RX 或 TX 时它将被清除。
+ 292   4                  //Test CRC
+ 293   4              SPI_ReadReg(48);
+ 294   4              if((RegH&0x80)==0)
+ 295   4             {
+ 296   5             //判断数据点亮灯
+ 297   5             if(RBUF[0]==1)
+ 298   5              {
+ 299   6              LED11=1;
+ 300   6              count=0;
+ 301   6              }
+ 302   5             else if(RBUF[0]==2)
+C51 COMPILER V9.54   LT8920                                                                03/26/2019 15:13:05 PAGE 6   
+
+ 303   5              {
+ 304   6              LED22=1;
+ 305   6              count=0;
+ 306   6              }
+ 307   5             }
+ 308   4            //再次初始化为接收模式
+ 309   4            index_state=INT_RX;
+ 310   4            //LED1_OFF();
+ 311   4              }
+ 312   3            break;
+ 313   3      
+ 314   3            case TX_DAT1:
+ 315   3             //将数据发送出去
+ 316   3             SPI_WriteReg(52, 0x80, 0x80);
+ 317   3             //i=0;
+ 318   3             //写入长度 长度包含长度字节本身
+ 319   3             SPI_WriteReg(50, 2,0);
+ 320   3                 //写入数据
+ 321   3             SPI_WriteReg(50, 1,0);
+ 322   3                 //开始发送
+ 323   3             SPI_WriteReg(7, 0x01, 0x20);
+ 324   3            
+ 325   3             while (PKT== 0)
+ 326   3             { SPI_ReadReg(48);
+ 327   4              if((RegL&0x40)==1)
+ 328   4              {PKT=1;}
+ 329   4              else
+ 330   4              {PKT=0;}      }; //等待发送完成
+ 331   3                 //判断是否收到对方自动应答信号,REG52<13:8>应为0
+ 332   3                 SPI_ReadReg(52);
+ 333   3             if((RegH& 0x3F)==0)//如果收到应答信号点亮本地对应的LED
+ 334   3              {
+ 335   4                 LED11=1;
+ 336   4               count=0;
+ 337   4              }
+ 338   3             //发送完成初始化为接收模式
+ 339   3             index_state=INT_RX;
+ 340   3            break;
+ 341   3      
+ 342   3            case TX_DAT2:
+ 343   3             //将数据发送出去
+ 344   3             SPI_WriteReg(52, 0x80, 0x80);
+ 345   3             i=0;
+ 346   3             //写入长度 长度包含长度字节本身
+ 347   3             SPI_WriteReg(50, 2,0);
+ 348   3                 //写入数据
+ 349   3             SPI_WriteReg(50, 2,0);
+ 350   3                 //开始发送
+ 351   3             SPI_WriteReg(7, 0x01, 0x20);
+ 352   3      
+ 353   3             while (PKT== 0)
+ 354   3             { SPI_ReadReg(48);
+ 355   4              if((RegL&0x40)==1)
+ 356   4              {PKT=1;}
+ 357   4              else
+ 358   4              {PKT=0;}      }; //等待发送完成
+ 359   3                 //判断是否收到对方自动应答信号,REG52<13:8>应为0
+ 360   3                 SPI_ReadReg(52);
+ 361   3             if((RegH& 0x3F)==0)//如果收到应答信号点亮本地对应的LED
+ 362   3              {
+ 363   4                 LED22=1;
+ 364   4               count=0;
+C51 COMPILER V9.54   LT8920                                                                03/26/2019 15:13:05 PAGE 7   
+
+ 365   4              }
+ 366   3             //发送完成初始化为接收模式
+ 367   3             index_state=INT_RX;
+ 368   3            break;
+ 369   3      
+ 370   3              default:break;
+ 371   3          }
+ 372   2          
+ 373   2        }
+ 374   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1127    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     35       3
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----       1
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

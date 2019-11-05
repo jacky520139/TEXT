@@ -1,0 +1,150 @@
+C51 COMPILER V9.52.0.0   UART                                                              10/21/2019 17:55:37 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE UART
+OBJECT MODULE PLACED IN ..\Output\UART.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Code\UART.C LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..\C
+                    -ommon;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\LST\UART.lst) TABS(2) OBJECT(..\Output\UART.obj)
+
+line level    source
+
+   1          #include "ALL_Includes.h"
+   2          //---------------------------------------------------------------
+   3          void InitialUART0_Timer3(u32 Baudrate) //use timer3 as Baudrate generator
+   4          {
+   5   1          P06_Quasi_Mode;
+   6   1          //P07_Quasi_Mode; 
+   7   1        
+   8   1          SCON = 0x52;     //UART0 Mode1,REN=1,TI=1
+   9   1          set_SMOD;        //UART0 Double Rate Enable
+  10   1          T3CON &= 0xF8;   //T3PS2=0,T3PS1=0,T3PS0=0(Prescale=1)
+  11   1          set_BRCK;        //UART0 baud rate clock source = Timer3
+  12   1          RH3    = HIBYTE(65536 - (1000000/Baudrate)-1);      /*16 MHz */
+  13   1          RL3    = LOBYTE(65536 - (1000000/Baudrate)-1);      /*16 MHz */
+  14   1      //    RH3    = HIBYTE(65536 - (10000/16/600)-1);      /*10kHz */
+  15   1      //    RL3    = LOBYTE(65536 - (10000/16/600)-1);      /*10kHz */
+  16   1          set_TR3;         //Trigger Timer3
+  17   1      }
+  18          u8 Receive_Data_From_UART0(void)
+  19          {
+  20   1          u8 c;
+  21   1          
+  22   1          while (!RI);
+  23   1          c = SBUF;
+  24   1          RI = 0;
+  25   1          return (c);
+  26   1      }
+  27          
+  28          void Send_Data_To_UART0 (u8 Data)
+  29          {
+  30   1          TI = 0;
+  31   1          SBUF = Data;
+  32   1          while(TI==0);
+  33   1      }
+  34          void Send_Word_To_UART0 (u16 Data)
+  35          {
+  36   1          TI = 0;
+  37   1          SBUF = Data>>8;
+  38   1          while(TI==0);
+  39   1          TI = 0;
+  40   1          SBUF = Data;
+  41   1          while(TI==0); 
+  42   1      }
+  43          
+  44          void InitialUART1_Timer3(u32 Baudrate) //use timer3 as Baudrate generator
+  45          {
+  46   1      
+  47   1      //    SCON = 0x52;     //UART0 Mode1,REN=1,TI=1
+  48   1      //    set_SMOD;        //UART0 Double Rate Enable
+  49   1      //    T3CON &= 0xF8;   //T3PS2=0,T3PS1=0,T3PS0=0(Prescale=1)
+  50   1      //    set_BRCK;        //UART0 baud rate clock source = Timer3
+  51   1         set_SM1_1;
+  52   1          RH3    = HIBYTE(65536 - (1000000/Baudrate)-1);      /*16 MHz */
+  53   1          RL3    = LOBYTE(65536 - (1000000/Baudrate)-1);      /*16 MHz */
+  54   1      
+C51 COMPILER V9.52.0.0   UART                                                              10/21/2019 17:55:37 PAGE 2   
+
+  55   1          set_TR3;         //Trigger Timer3
+  56   1      }
+  57          
+  58          void Send_Data_To_UART1 (u8 Data)
+  59          {
+  60   1          TI_1 = 0;
+  61   1          SBUF_1 = Data;
+  62   1          while(TI_1==0);
+  63   1      }
+  64          void Send_Word_To_UART1 (u16 Data)
+  65          {
+  66   1          TI_1 = 0;
+  67   1          SBUF_1 = Data>>8;
+  68   1          while(TI_1==0);
+  69   1          TI_1 = 0;
+  70   1          SBUF_1 = Data;
+  71   1          while(TI_1==0); 
+  72   1      }
+  73          void UartSendBuf(char*buf,u8 sz){
+  74   1          u8 i;
+  75   1      
+  76   1          for(i=0;i<sz;i++){
+  77   2              Send_Data_To_UART0(buf[i]);
+  78   2          }
+  79   1      }
+  80          
+  81          //数据拆分宏定义，在发送大于1字节的数据类型时，比如int16、float等，需要把数据拆分成单独字节进行发送
+  82          #define BYTE0(dwTemp)       ( *( (char *)(&dwTemp)    ) )
+  83          #define BYTE1(dwTemp)       ( *( (char *)(&dwTemp) + 1) )
+  84          //#define BYTE2(dwTemp)       ( *( (char *)(&dwTemp) + 2) )
+  85          //#define BYTE3(dwTemp)       ( *( (char *)(&dwTemp) + 3) )
+  86          u8 data_to_send[50];  //发送数据缓存
+  87          
+  88          
+  89          void ANO_DT_Send_Version(u8 type, u16 Data1, u16 Data2, u16 Data3, u16 Data4, u16 Data5)
+  90          {
+  91   1        u8 _cnt=0;
+  92   1        u8 sum = 0;
+  93   1        u8 i;
+  94   1        data_to_send[_cnt++]=0xAA;
+  95   1        data_to_send[_cnt++]=0xAA;
+  96   1        data_to_send[_cnt++]=type;
+  97   1        data_to_send[_cnt++]=0;
+  98   1        data_to_send[_cnt++]=BYTE0(Data1);
+  99   1        data_to_send[_cnt++]=BYTE1(Data1);
+ 100   1        data_to_send[_cnt++]=BYTE0(Data2);
+ 101   1        data_to_send[_cnt++]=BYTE1(Data2);
+ 102   1        
+ 103   1          data_to_send[_cnt++]=BYTE0(Data3);
+ 104   1        data_to_send[_cnt++]=BYTE1(Data3);
+ 105   1        
+ 106   1          data_to_send[_cnt++]=BYTE0(Data4);
+ 107   1        data_to_send[_cnt++]=BYTE1(Data4);
+ 108   1            data_to_send[_cnt++]=BYTE0(Data5);
+ 109   1        data_to_send[_cnt++]=BYTE1(Data5);
+ 110   1        data_to_send[3] = _cnt-4;
+ 111   1        
+ 112   1      
+ 113   1        for( i=0;i<_cnt;i++)
+ 114   1          sum += data_to_send[i];
+ 115   1        data_to_send[_cnt++]=sum;
+ 116   1        UartSendBuf(data_to_send, _cnt);
+C51 COMPILER V9.52.0.0   UART                                                              10/21/2019 17:55:37 PAGE 3   
+
+ 117   1      
+ 118   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    688    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     50      22
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

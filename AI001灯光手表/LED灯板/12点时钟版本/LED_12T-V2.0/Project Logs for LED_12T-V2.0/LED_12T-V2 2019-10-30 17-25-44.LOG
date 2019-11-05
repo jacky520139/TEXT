@@ -1,0 +1,5 @@
+Removed Pin From Net: NetName=GND Pin=GND1-1
+Change Component Footprint: Designator=BAT Old Footprint=≤‚ ‘µ„ New Footprint=CR2450_Z
+Added Component: Designator=GND1(≤‚ ‘µ„)
+Added Pin To Net: NetName=GND Pin=GND1-1
+Added Room: Name=LED_12T-V2.0

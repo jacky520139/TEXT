@@ -1,0 +1,72 @@
+C51 COMPILER V9.52.0.0   MAIN                                                              10/19/2019 14:09:50 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN ..\Output\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Code\main.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..\C
+                    -ommon;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\LST\main.lst) TABS(2) OBJECT(..\Output\main.obj)
+
+line level    source
+
+   1          
+   2          #include "ALL_Includes.h"
+   3          void main (void)
+   4          {  
+   5   1        InitSystem();
+   6   1        while(1)
+   7   1        { if(LED_Cycle>=1)
+   8   2          { LED_0FF;
+   9   3            clr_WKTR;
+  10   3            PIF=0;
+  11   3            set_EPI;}//周期到了后不运行自动唤醒
+  12   2      //      BG_1_22V=ADC_Read(8);
+  13   2      //      VDD_VAL=(u32)4096*122/BG_1_22V;
+  14   2      //      ANO_DT_Send_Version(0XF1, VDD_VAL, ADC_Read(4),0 , 0, 0);
+  15   2            set_PD;//进入休眠 
+  16   2          }
+  17   1        
+  18   1      //  while(1)
+  19   1      //  {   
+  20   1      //    SysTimer_Process();
+  21   1      //      if(bsystem2Msec)
+  22   1      //      {
+  23   1      ////        clr_HIRCST;   
+  24   1      //      }
+  25   1      //    if(bsystem5Msec)
+  26   1      //    { 
+  27   1      ////      EA=0;
+  28   1      ////      set_PD;//进入休眠   
+  29   1      //      }
+  30   1      //      if(bsystem10Msec)
+  31   1      //        { 
+  32   1      //                    }
+  33   1      //                    
+  34   1      //      if(bsystem1Sec)
+  35   1      //        { 
+  36   1      //          EA=0;
+  37   1      //          //set_PD;//进入休眠 
+  38   1      //                    }
+  39   1      
+  40   1      //  }   
+  41   1      }
+  42          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     47    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+C51 COMPILER V9.52.0.0   MAIN                                                              10/19/2019 14:09:50 PAGE 2   
+
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

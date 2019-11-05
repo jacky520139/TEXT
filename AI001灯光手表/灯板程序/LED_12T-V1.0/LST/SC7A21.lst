@@ -1,0 +1,111 @@
+C51 COMPILER V9.52.0.0   SC7A21                                                            10/19/2019 14:09:50 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE SC7A21
+OBJECT MODULE PLACED IN ..\Output\SC7A21.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Code\SC7A21.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..
+                    -\Common;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\LST\SC7A21.lst) TABS(2) OBJECT(..\Output\SC7A21.obj)
+
+line level    source
+
+   1          #include "ALL_Includes.h"
+   2          #define MAX_PACKET_LEN  32// max value is 32
+   3          u8 Rx_buf[MAX_PACKET_LEN];//½ÓÊÕ»º´æ
+   4          u8 TX_buf[MAX_PACKET_LEN];//½ÓÊÕ»º´æ
+   5          code unsigned char  Reg[][2] = {
+   6              {STEP_CTRL,    Bin(00000001)},    //B7~B6,¼Æ²½ÖÐ¶Ï2£¬B5~B4,¼Æ²½ÖÐ¶Ï1£¬B2:Çå³ý¼Æ²½£¬B1:ODRÆµÂÊ£¬B0:¼Æ²½¹¦Ä
+             -Ü¿ª¹Ø
+   7              {STEP_DELTA,   Bin(00000000)},    //¼Æ²½²îÖµ¿ØÖÆ
+   8              {STEP_WTM0,    Bin(00000000)},    //¼Æ²½ãÐÖµµÍÎ»ÉèÖÃ¼Ä´æÆ÷
+   9              {STEP_WTM,     Bin(00000000)},    //¼Æ²½ãÐÖµ¸ßÎ»ÉèÖÃ¼Ä´æÆ÷
+  10              {STEP_CONFIG1, Bin(00000000)},    //¼Æ²½Öµ¿ØÖÆ¼Ä´æÆ÷1
+  11              {STEP_CONFIG2, Bin(00000000)},    //¼Æ²½Öµ¿ØÖÆ¼Ä´æÆ÷2
+  12              {CTRL_REG0,    Bin(00000000)},    //¼Æ²½¿ØÖÆÆ÷£¬b6:ÎÂ¶È´«¸ÐÆ÷£¬B4:ÂË²¨Êý¾Ý,B3:¸ßÐÔÄÜ,B2:µÍÍ¨ÂË²¨£¬B1~B0:
+             -ÂË²¨ÆµÂÊ
+  13              {CTRL_REG1,    Bin(01000111)},    //B7~B4:Êý¾ÝÂÊ£¬B3:0Õý³££¬1µÍ¹¦ºÄ£¬B2:ZÖáÊ¹ÄÜ£¬B2:YÖáÊ¹ÄÜ£¬B2:XÖáÊ¹ÄÜ£
+             -¬
+  14              {CTRL_REG2,    Bin(00000000)},    //B7~B6:¸ßÍ¨Ä£Ê½Ñ¡Ôñ,B5~B4:¸ßÍ¨½ØÖ¹ÆµÂÊÑ¡Ôñ,B3:Êý¾ÝÂË²¨Ñ¡Ôñ,B2:CLICK ¹
+             -¦ÄÜ¸ßÍ¨ÂË²¨Ê¹ÄÜ,B1ÖÐ¶Ï 2 AOI ¹¦ÄÜ¸ßÍ¨ÂË²¨Ê¹ÄÜ,B0:ÖÐ¶Ï 1 AOI ¹¦ÄÜ¸ßÍ¨ÂË²¨Ê¹ÄÜ
+  15              {CTRL_REG3,    Bin(00000000)},    //
+  16              {CTRL_REG4,    Bin(00000000)},    //
+  17              {CTRL_REG5,    Bin(00000000)},   //
+  18              {CTRL_REG6,    Bin(00000000)},   //
+  19              {REFERENCE,    Bin(00000000)},   //
+  20              {STATUS_REG,   Bin(00000000)},    //
+  21              {FIFO_CTRL_REG,Bin(00000000)},    //
+  22              {A0I1_CFG,     Bin(00000000)},   //
+  23              {AOI_THS,      Bin(00000000)},   //
+  24              {AOI1_DURATION,Bin(00000000)},   //
+  25              {A012_CFG,     Bin(00000000)},   //
+  26              {AO12_TSH,     Bin(00000000)},   //
+  27              {AO12_DURATION,Bin(00000000)},    //
+  28              {CLICK_CFG,    Bin(00000000)},    //
+  29              {CLICK_TSH,    Bin(00000000)},    //
+  30              {TIME_LIMIT,   Bin(00000000)},    //
+  31              {TIME_LATENCY, Bin(00000000)},   //
+  32              {TIME_WINDOW,  Bin(00000000)},   //
+  33              {ACT_THS,      Bin(00000000)},   //
+  34              {ACT_DURATION, Bin(00000000)},   //
+  35          };
+  36           /***************************************************************
+  37          * º¯Êý¹¦ÄÜ£º³õÊ¼»¯SC7A21
+  38          * ÊäÈë²ÎÊý£º
+  39          * Êä³ö²ÎÊý£º
+  40          ***************************************************************/
+  41          void INIT_SC7A21(void)
+  42          {
+  43   1      u8 i,j=sizeof(Reg)/2;
+  44   1      for(i=0;i<j;i++)
+  45   1      { 
+  46   2      i2cs_tx_data(SC7A21_ADDR,Reg[i][0],&(Reg[i][1]),1);
+  47   2      }
+  48   1      }
+  49           /***************************************************************
+  50          * º¯Êý¹¦ÄÜ£º¶Á¼Æ²½Öµ
+C51 COMPILER V9.52.0.0   SC7A21                                                            10/19/2019 14:09:50 PAGE 2   
+
+  51          * ÊäÈë²ÎÊý£º
+  52          * Êä³ö²ÎÊý£º
+  53          ***************************************************************/
+  54          void Read_STEP_COUNTER(void)
+  55          {
+  56   1      i2cs_rx_data(SC7A21_ADDR,STEP_COUNTER0,Rx_buf,3);
+  57   1      }
+  58           /***************************************************************
+  59          * º¯Êý¹¦ÄÜ£ºÇå³ý¼Æ²½Öµ
+  60          * ÊäÈë²ÎÊý£º
+  61          * Êä³ö²ÎÊý£º
+  62          ***************************************************************/
+  63          void Clean_STEP_COUNTER(void)
+  64          {u8 temp;
+  65   1      i2cs_rx_data(SC7A21_ADDR,STEP_CTRL,&temp,1);
+  66   1      temp=temp&(~0x04);
+  67   1      i2cs_tx_data(SC7A21_ADDR,STEP_CTRL,&temp,1);
+  68   1      }
+  69          
+  70          //void INIT_SC7A21(void)
+  71          //{
+  72          //i2cs_tx_data(uint8_t devAddr7,STEP_CTRL,uint8_t*buf,uint8_t Size);
+  73          
+  74          
+  75          
+  76          //}
+  77          //Çå³ý¼Æ²½Öµ¼Ä´æÆ÷Êý¾Ý
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    145    ----
+   CONSTANT SIZE    =     58    ----
+   XDATA SIZE       =     64       3
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

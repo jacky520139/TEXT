@@ -1,0 +1,316 @@
+C51 COMPILER V9.52.0.0   WORK                                                              10/24/2019 16:40:54 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE WORK
+OBJECT MODULE PLACED IN ..\Output\Work.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Code\Work.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..\C
+                    -ommon;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\LST\Work.lst) TABS(2) OBJECT(..\Output\Work.obj)
+
+line level    source
+
+   1          
+   2          #include "ALL_Includes.h"
+   3          #define SaveCount     10
+   4          u16 EEPROM_DATA[SaveCount];
+   5          bit LED_State=0;
+   6          u8 LED_Cycle=0;//LED运行周期，走完12点为一个周期
+   7          u8 LED_Bri=3;//led的亮度
+   8          u8 LED_OPEN_T=Default_LED_OPEN_T;
+   9          u8 LED_CLOSE_T=Default_LED_CLOSE_T;
+  10          u8 LED_OPEN_Time=Default_LED_OPEN_Time;
+  11          /***************************************************************
+  12          * 函数功能：写入工作参数
+  13          * 输入参数：
+  14          * 输出参数：
+  15          ***************************************************************/    
+  16          void WriteEeprom(void)
+  17          {
+  18   1      ////////////////////写入工作参数///////////////////////////// 
+  19   1      //  EEPROM_DATA[0]=Software_NO;
+  20   1      //  EEPROM_DATA[1]=Work_Address[0];
+  21   1      //  EEPROM_DATA[2]=Work_Address[1];
+  22   1      //  EEPROM_DATA[3]=Work_Address[2];
+  23   1      //  EEPROM_DATA[4]=Work_Address[3];
+  24   1      //  EEPROM_DATA[5]=Work_Address[4];
+  25   1        
+  26   1        writerom(EEPROM_DATA,SaveCount);
+  27   1      } 
+  28          /***************************************************************
+  29          * 函数名称void ParameterReset(void)
+  30          * 函数功能：重置参数
+  31          * 输入参数无
+  32          * 输出参数：无
+  33          ***************************************************************/
+  34          void ParameterReset(void)
+  35          { 
+  36   1      //  Work_Address[0]=0xf1;
+  37   1      //  Work_Address[1]=0xf2;
+  38   1      //  Work_Address[2]=0xf3;
+  39   1      //  Work_Address[3]=0xf4;
+  40   1      //  Work_Address[4]=0xf5;
+  41   1        WriteEeprom();
+  42   1        readrom(EEPROM_DATA,SaveCount); 
+  43   1      
+  44   1      }
+  45          
+  46          /***************************************************************
+  47          * 函数名称void ReadEeprom(void)
+  48          * 函数功能：读取工作参数
+  49          * 输入参数无
+  50          * 输出参数：无
+  51          ***************************************************************/
+  52          u8 ReadEeprom(void)
+  53          {
+  54   1      //   readrom(EEPROM_DATA,SaveCount);
+C51 COMPILER V9.52.0.0   WORK                                                              10/24/2019 16:40:54 PAGE 2   
+
+  55   1      //  if(EEPROM_DATA[0]!=Software_NO)//初片设置出厂数据"14代表版本号"  
+  56   1      //  {
+  57   1      //    ParameterReset();
+  58   1      //   if(EEPROM_DATA[0]!=Software_NO)
+  59   1      //   return 1;}    
+  60   1      //    ////////////////////读取工作参数////////////////////////////////
+  61   1      //  Work_Address[0]=EEPROM_DATA[1];
+  62   1      //  Work_Address[1]=EEPROM_DATA[2];
+  63   1      //  Work_Address[2]=EEPROM_DATA[3];
+  64   1      //  Work_Address[3]=EEPROM_DATA[4];
+  65   1      //  Work_Address[4]=EEPROM_DATA[5];
+  66   1       
+  67   1         return 0;
+  68   1          }
+  69          
+  70          enum 
+  71              { LED11,LED10,LED21,LED20,LED31,LED30,LED41,LED40,LED51,LED50,LED61,LED60,LED71,LED70,LED81,LED80,\
+  72                LED91,LED90,LEDA1,LEDA0,LEDB1,LEDB0,LEDC1,LEDC0};
+  73           
+  74          u8 LED_Count=0,LED_Count2=0;      
+  75          void Scan_LED(void)
+  76          { static u8 LED_Count1=0;
+  77   1      
+  78   1        switch(LED_Count)
+  79   1        {
+  80   2        case LEDC1:
+  81   2                if((LED_Count1&0x01)==1)
+  82   2                {GET3=0;
+  83   3                GET1=1;
+  84   3                COM4=0;
+  85   3                }
+  86   2                else
+  87   2                {COM4=1;}
+  88   2                RWK=LED_OPEN_T;
+  89   2        break;
+  90   2        case LEDC0:
+  91   2                COM4=1;
+  92   2                RWK=LED_CLOSE_T;
+  93   2        break;    
+  94   2        case LED11:
+  95   2              if((LED_Count1&0x01)==1)
+  96   2              {
+  97   3               COM4=1;
+  98   3               GET1=1;
+  99   3               COM1=0;
+ 100   3              }
+ 101   2              else
+ 102   2              {COM1=1;}
+ 103   2               RWK=LED_OPEN_T;
+ 104   2      //         LED_Count++;
+ 105   2        break;
+ 106   2        case LED10:
+ 107   2               COM1=1;
+ 108   2               RWK=LED_CLOSE_T;
+ 109   2      //     LED_Count1++;
+ 110   2      //  if(LED_Count1>=5)
+ 111   2      //  {LED_Count1=0;
+ 112   2      //   LED_Count++;}
+ 113   2      //  else LED_Count--;
+ 114   2        break;    
+ 115   2        case LED21:
+ 116   2           if((LED_Count1&0x01)==1)
+C51 COMPILER V9.52.0.0   WORK                                                              10/24/2019 16:40:54 PAGE 3   
+
+ 117   2              {
+ 118   3               COM2=0;
+ 119   3              }
+ 120   2              else
+ 121   2              {COM2=1;}
+ 122   2               RWK=LED_OPEN_T;
+ 123   2      //         LED_Count++;
+ 124   2        break;
+ 125   2        case LED20:
+ 126   2               COM2=1;
+ 127   2               RWK=LED_CLOSE_T;
+ 128   2        break;  
+ 129   2        case LED31:
+ 130   2       if((LED_Count1&0x01)==1)
+ 131   2              {
+ 132   3               COM3=0;
+ 133   3              }
+ 134   2              else
+ 135   2              {COM3=1;}
+ 136   2               RWK=LED_OPEN_T;
+ 137   2        break;
+ 138   2        case LED30:
+ 139   2               COM3=1;
+ 140   2               RWK=LED_CLOSE_T;
+ 141   2        break;  
+ 142   2        case LED41:
+ 143   2           if((LED_Count1&0x01)==1)
+ 144   2           {
+ 145   3               GET1=0;
+ 146   3               GET2=1;
+ 147   3               COM1=0;
+ 148   3           }
+ 149   2           else
+ 150   2           {COM1=1;}
+ 151   2               RWK=LED_OPEN_T;
+ 152   2        break;
+ 153   2        case LED40:
+ 154   2               COM1=1;
+ 155   2               RWK=LED_CLOSE_T;
+ 156   2        break;  
+ 157   2        
+ 158   2        case LED51:
+ 159   2       if((LED_Count1&0x01)==1)
+ 160   2           {
+ 161   3               COM2=0;
+ 162   3           }
+ 163   2           else
+ 164   2           { COM2=1;}
+ 165   2               RWK=LED_OPEN_T;
+ 166   2        break;
+ 167   2        case LED50:
+ 168   2               COM2=1;
+ 169   2               RWK=LED_CLOSE_T;
+ 170   2        break;  
+ 171   2        case LED61:
+ 172   2           if((LED_Count1&0x01)==1)
+ 173   2           {
+ 174   3               COM3=0;
+ 175   3           }
+ 176   2           else
+ 177   2           { COM3=1;}
+ 178   2               RWK=LED_OPEN_T;
+C51 COMPILER V9.52.0.0   WORK                                                              10/24/2019 16:40:54 PAGE 4   
+
+ 179   2        break;
+ 180   2        case LED60:
+ 181   2               COM3=1;
+ 182   2               RWK=LED_CLOSE_T;
+ 183   2        break;  
+ 184   2        case LED71:
+ 185   2               if((LED_Count1&0x01)==1)
+ 186   2           {
+ 187   3              COM4=0;
+ 188   3           }
+ 189   2           else
+ 190   2           {COM4=1;}
+ 191   2              RWK=LED_OPEN_T;
+ 192   2        break;
+ 193   2        case LED70:
+ 194   2          
+ 195   2              COM4=1;
+ 196   2              RWK=LED_CLOSE_T;
+ 197   2        break;  
+ 198   2        case LED81:
+ 199   2             if((LED_Count1&0x01)==1)
+ 200   2             {
+ 201   3               GET2=0;
+ 202   3               GET3=1;
+ 203   3               COM1=0;
+ 204   3             }
+ 205   2             else
+ 206   2             {COM1=1;}
+ 207   2               RWK=LED_OPEN_T;
+ 208   2        break;
+ 209   2        case LED80:
+ 210   2              COM1=1;
+ 211   2              RWK=LED_CLOSE_T;
+ 212   2        break;  
+ 213   2        case LED91:
+ 214   2           if((LED_Count1&0x01)==1)
+ 215   2           {
+ 216   3               COM2=0;
+ 217   3           }
+ 218   2           else
+ 219   2           { COM2=1;}
+ 220   2               RWK=LED_OPEN_T;
+ 221   2        break;
+ 222   2        case LED90:
+ 223   2              COM2=1;
+ 224   2              RWK=LED_CLOSE_T;
+ 225   2        break;  
+ 226   2        case LEDA1:
+ 227   2          if((LED_Count1&0x01)==1)
+ 228   2          {
+ 229   3               COM3=0;  
+ 230   3          }else
+ 231   2          { COM3=1;}
+ 232   2               RWK=LED_OPEN_T;  
+ 233   2        break;
+ 234   2        case LEDA0:
+ 235   2               COM3=1;
+ 236   2               RWK=LED_CLOSE_T; 
+ 237   2        break;
+ 238   2        case LEDB1:
+ 239   2              if((LED_Count1&0x01)==1)
+ 240   2          {
+C51 COMPILER V9.52.0.0   WORK                                                              10/24/2019 16:40:54 PAGE 5   
+
+ 241   3               COM4=0;}
+ 242   2            else
+ 243   2            { COM4=1;}
+ 244   2               RWK=LED_OPEN_T;  
+ 245   2        break;  
+ 246   2        case LEDB0:
+ 247   2              COM4=1;
+ 248   2              RWK=LED_CLOSE_T;  
+ 249   2        break;
+ 250   2        }
+ 251   1      
+ 252   1       //LED_Count++;
+ 253   1      if((LED_Count&0x01)==0)
+ 254   1      { LED_Count++;}
+ 255   1      else
+ 256   1      {  
+ 257   2        if(LED_Count1%5==4)
+ 258   2        {
+ 259   3      //    LED_Count1=0;
+ 260   3         LED_Count++;}
+ 261   2        
+ 262   2        else LED_Count--;
+ 263   2         
+ 264   2         LED_Count1++;
+ 265   2      }
+ 266   1        if(LED_Count>=24)
+ 267   1        {  LED_Count=0;
+ 268   2           LED_Cycle++;}
+ 269   1      
+ 270   1       
+ 271   1           
+ 272   1           
+ 273   1           
+ 274   1           
+ 275   1           
+ 276   1           
+ 277   1      } 
+ 278           
+ 279           
+ 280           
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    655    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     28    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

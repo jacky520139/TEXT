@@ -1,0 +1,7 @@
+Added Component: Designator=C6(0603_C)
+Added Pin To Net: NetName=GND Pin=C6-1
+Added Pin To Net: NetName=BAT Pin=C6-2
+Added Pin To Net: NetName=GND Pin=P1-1
+Added Pin To Net: NetName=BAT Pin=P1-2
+Added Member To Class: ClassName=LED_12T-V1.1 Member=Component C6 2.2uF
+Added Room: Name=LED_12T-V1.1

@@ -1,0 +1,442 @@
+C51 COMPILER V9.52.0.0   WORK                                                              10/22/2019 13:36:58 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE WORK
+OBJECT MODULE PLACED IN ..\Output\Work.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Code\Work.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..\C
+                    -ommon;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\LST\Work.lst) TABS(2) OBJECT(..\Output\Work.obj)
+
+line level    source
+
+   1          
+   2          #include "ALL_Includes.h"
+   3          #define SaveCount     10
+   4          u16 EEPROM_DATA[SaveCount];
+   5          bit LED_State=0;
+   6          u8 LED_Minute=0;//LED运行周期，走完12点为一个周期
+   7          u8 LED_Bri=3;//led的亮度
+   8          u8 LED_OPEN_T=Default_LED_OPEN_T;
+   9          u8 LED_CLOSE_T=Default_LED_CLOSE_T;
+  10          u8 LED_OPEN_Time=Default_LED_OPEN_Time;
+  11          void Delay1us(u8 cnt)   //@5.5296MHz
+  12          {
+  13   1      //  unsigned char i;
+  14   1      //  _nop_();
+  15   1      //  i = cnt;
+  16   1        while (--cnt);
+  17   1      }
+  18          
+  19          /***************************************************************
+  20          * 函数功能：写入工作参数
+  21          * 输入参数：
+  22          * 输出参数：
+  23          ***************************************************************/    
+  24          void WriteEeprom(void)
+  25          {
+  26   1      ////////////////////写入工作参数///////////////////////////// 
+  27   1      //  EEPROM_DATA[0]=Software_NO;
+  28   1      //  EEPROM_DATA[1]=Work_Address[0];
+  29   1      //  EEPROM_DATA[2]=Work_Address[1];
+  30   1      //  EEPROM_DATA[3]=Work_Address[2];
+  31   1      //  EEPROM_DATA[4]=Work_Address[3];
+  32   1      //  EEPROM_DATA[5]=Work_Address[4];
+  33   1        
+  34   1        writerom(EEPROM_DATA,SaveCount);
+  35   1      } 
+  36          /***************************************************************
+  37          * 函数名称void ParameterReset(void)
+  38          * 函数功能：重置参数
+  39          * 输入参数无
+  40          * 输出参数：无
+  41          ***************************************************************/
+  42          void ParameterReset(void)
+  43          { 
+  44   1      //  Work_Address[0]=0xf1;
+  45   1      //  Work_Address[1]=0xf2;
+  46   1      //  Work_Address[2]=0xf3;
+  47   1      //  Work_Address[3]=0xf4;
+  48   1      //  Work_Address[4]=0xf5;
+  49   1        WriteEeprom();
+  50   1        readrom(EEPROM_DATA,SaveCount); 
+  51   1      
+  52   1      }
+  53          
+  54          /***************************************************************
+C51 COMPILER V9.52.0.0   WORK                                                              10/22/2019 13:36:58 PAGE 2   
+
+  55          * 函数名称void ReadEeprom(void)
+  56          * 函数功能：读取工作参数
+  57          * 输入参数无
+  58          * 输出参数：无
+  59          ***************************************************************/
+  60          u8 ReadEeprom(void)
+  61          {
+  62   1      //   readrom(EEPROM_DATA,SaveCount);
+  63   1      //  if(EEPROM_DATA[0]!=Software_NO)//初片设置出厂数据"14代表版本号"  
+  64   1      //  {
+  65   1      //    ParameterReset();
+  66   1      //   if(EEPROM_DATA[0]!=Software_NO)
+  67   1      //   return 1;}    
+  68   1      //    ////////////////////读取工作参数////////////////////////////////
+  69   1      //  Work_Address[0]=EEPROM_DATA[1];
+  70   1      //  Work_Address[1]=EEPROM_DATA[2];
+  71   1      //  Work_Address[2]=EEPROM_DATA[3];
+  72   1      //  Work_Address[3]=EEPROM_DATA[4];
+  73   1      //  Work_Address[4]=EEPROM_DATA[5];
+  74   1       
+  75   1         return 0;
+  76   1          }
+  77          
+  78          enum 
+  79              { LED11,LED10,LED21,LED20,LED31,LED30,LED41,LED40,LED51,LED50,LED61,LED60,LED71,LED70,LED81,LED80,\
+  80                LED91,LED90,LEDA1,LEDA0,LEDB1,LEDB0,LEDC1,LEDC0};
+  81           
+  82          u8 LED_Count=0,LED_Count2=0;  
+  83          bit LED_ON_F=1; 
+  84          u8 LED_cycle=30;//LED的pwm周期
+  85          u8 LED_Duty=1;//LED的pwm的占空比
+  86          u8 LED_cycle_cnt=7;//LED的pwm周期数     
+  87          void Scan_LED(void)
+  88          { static u8 Seconds=0;
+  89   1        u8 RWK_T;
+  90   1        u8 i;
+  91   1        switch(LED_Count)
+  92   1        {
+  93   2        case LEDC1:
+  94   2                GET3=0;
+  95   2                GET1=1;
+  96   2                for(i=0;i<LED_cycle_cnt;i++)
+  97   2                {
+  98   3                COM4=0;
+  99   3                Delay1us(LED_Duty);
+ 100   3                COM4=1;
+ 101   3                Delay1us(LED_cycle-LED_Duty);
+ 102   3                }
+ 103   2                LED_Count++;
+ 104   2                RELOAD_RWK(0xfe); 
+ 105   2        break;
+ 106   2        case LEDC0:
+ 107   2                COM4=1;
+ 108   2                RELOAD_RWK(0xff-LED_CLOSE_T);
+ 109   2                Seconds++;
+ 110   2               if(Seconds%5==4)
+ 111   2             {LED_Count=LED11;}
+ 112   2             else
+ 113   2             {LED_Count--;}
+ 114   2        break;    
+ 115   2        case LED11:
+ 116   2                COM4=1;
+C51 COMPILER V9.52.0.0   WORK                                                              10/22/2019 13:36:58 PAGE 3   
+
+ 117   2                GET1=1;
+ 118   2                for(i=0;i<LED_cycle_cnt;i++)
+ 119   2                {
+ 120   3                COM1=0;
+ 121   3                Delay1us(LED_Duty);
+ 122   3                COM1=1;
+ 123   3                Delay1us(LED_cycle-LED_Duty);
+ 124   3                }
+ 125   2                LED_Count++; 
+ 126   2                RELOAD_RWK(0xfe);         
+ 127   2        break;
+ 128   2        case LED10:
+ 129   2               COM1=1;
+ 130   2               RELOAD_RWK(0xff-LED_CLOSE_T);
+ 131   2               Seconds++;
+ 132   2             if(Seconds%5==4)
+ 133   2             {LED_Count++;}
+ 134   2             else
+ 135   2             {LED_Count--;}
+ 136   2        break;    
+ 137   2        case LED21:
+ 138   2      //            if((Seconds&0x01)==1)
+ 139   2      //        {
+ 140   2                for(i=0;i<LED_cycle_cnt;i++)
+ 141   2                {
+ 142   3                COM2=0;
+ 143   3                Delay1us(LED_Duty);
+ 144   3                COM2=1;
+ 145   3                Delay1us(LED_cycle-LED_Duty);
+ 146   3                }
+ 147   2                LED_Count++;   
+ 148   2                RELOAD_RWK(0xfe);
+ 149   2      //        }
+ 150   2      //        else
+ 151   2      //        {COM2=1;
+ 152   2      //         RWK=235;
+ 153   2      //         LED_Count++;
+ 154   2      //        }
+ 155   2      //     if((Seconds&0x01)==1)
+ 156   2      //        {
+ 157   2      //         COM2=0;
+ 158   2      //        }
+ 159   2      //        else
+ 160   2      //        {COM2=1;}
+ 161   2      //         RWK=LED_OPEN_T;
+ 162   2      //         LED_Count++;
+ 163   2        break;
+ 164   2        case LED20:
+ 165   2               COM2=1;
+ 166   2               RELOAD_RWK(0xff-LED_CLOSE_T);
+ 167   2               Seconds++;
+ 168   2             if(Seconds%5==4)
+ 169   2             {LED_Count++;}
+ 170   2             else
+ 171   2             {LED_Count--;}
+ 172   2        break;  
+ 173   2        case LED31:
+ 174   2                for(i=0;i<LED_cycle_cnt;i++)
+ 175   2                {
+ 176   3                COM3=0;
+ 177   3                Delay1us(LED_Duty);
+ 178   3                COM3=1;
+C51 COMPILER V9.52.0.0   WORK                                                              10/22/2019 13:36:58 PAGE 4   
+
+ 179   3                Delay1us(LED_cycle-LED_Duty);
+ 180   3                }
+ 181   2                LED_Count++; 
+ 182   2                RELOAD_RWK(0xfe);           
+ 183   2      // if((Seconds&0x01)==1)
+ 184   2      //        {
+ 185   2      //         COM3=0;
+ 186   2      //        }
+ 187   2      //        else
+ 188   2      //        {COM3=1;}
+ 189   2      //         RWK=LED_OPEN_T;
+ 190   2      //        LED_Count++;
+ 191   2        break;
+ 192   2        case LED30:
+ 193   2               COM3=1;
+ 194   2               RELOAD_RWK(0xff-LED_CLOSE_T);
+ 195   2      //         RWK=LED_CLOSE_T;
+ 196   2               Seconds++;
+ 197   2             if(Seconds%5==4)
+ 198   2             {LED_Count++;}
+ 199   2             else
+ 200   2             {LED_Count--;}
+ 201   2        break;  
+ 202   2        case LED41:
+ 203   2                GET1=0;
+ 204   2                GET2=1;
+ 205   2                for(i=0;i<LED_cycle_cnt;i++)
+ 206   2                {
+ 207   3                COM1=0;
+ 208   3                Delay1us(LED_Duty);
+ 209   3                COM1=1;
+ 210   3                Delay1us(LED_cycle-LED_Duty);
+ 211   3                }
+ 212   2           LED_Count++;
+ 213   2                RELOAD_RWK(0xfe); 
+ 214   2        break;
+ 215   2        case LED40:
+ 216   2               COM1=1;
+ 217   2               RELOAD_RWK(0xff-LED_CLOSE_T);
+ 218   2               Seconds++;
+ 219   2             if(Seconds%5==4)
+ 220   2             {LED_Count++;}
+ 221   2             else
+ 222   2             {LED_Count--;}
+ 223   2        break;  
+ 224   2        
+ 225   2        case LED51:
+ 226   2                for(i=0;i<LED_cycle_cnt;i++)
+ 227   2                {
+ 228   3                COM2=0;
+ 229   3                Delay1us(LED_Duty);
+ 230   3                COM2=1;
+ 231   3                Delay1us(LED_cycle-LED_Duty);
+ 232   3                }
+ 233   2           LED_Count++;
+ 234   2                RELOAD_RWK(0xfe); 
+ 235   2        break;
+ 236   2        case LED50:
+ 237   2               COM2=1;
+ 238   2               RELOAD_RWK(0xff-LED_CLOSE_T);
+ 239   2               Seconds++;
+ 240   2             if(Seconds%5==4)
+C51 COMPILER V9.52.0.0   WORK                                                              10/22/2019 13:36:58 PAGE 5   
+
+ 241   2             {LED_Count++;}
+ 242   2             else
+ 243   2             {LED_Count--;}
+ 244   2        break;  
+ 245   2        case LED61:
+ 246   2                for(i=0;i<LED_cycle_cnt;i++)
+ 247   2                {
+ 248   3                COM3=0;
+ 249   3                Delay1us(LED_Duty);
+ 250   3                COM3=1;
+ 251   3                Delay1us(LED_cycle-LED_Duty);
+ 252   3                }
+ 253   2           LED_Count++;
+ 254   2                RELOAD_RWK(0xfe); 
+ 255   2        break;
+ 256   2        case LED60:
+ 257   2               COM3=1;
+ 258   2                RELOAD_RWK(0xff-LED_CLOSE_T);
+ 259   2               Seconds++;
+ 260   2             if(Seconds%5==4)
+ 261   2             {LED_Count++;}
+ 262   2             else
+ 263   2             {LED_Count--;}
+ 264   2        break;  
+ 265   2        case LED71:
+ 266   2                for(i=0;i<LED_cycle_cnt;i++)
+ 267   2                {
+ 268   3                COM4=0;
+ 269   3                Delay1us(LED_Duty);
+ 270   3                COM4=1;
+ 271   3                Delay1us(LED_cycle-LED_Duty);
+ 272   3                }
+ 273   2           LED_Count++;
+ 274   2                RELOAD_RWK(0xfe); 
+ 275   2        break;
+ 276   2        case LED70:
+ 277   2          
+ 278   2              COM4=1;
+ 279   2               RELOAD_RWK(0xff-LED_CLOSE_T);
+ 280   2               Seconds++;
+ 281   2             if(Seconds%5==4)
+ 282   2             {LED_Count++;}
+ 283   2             else
+ 284   2             {LED_Count--;}
+ 285   2        break;  
+ 286   2        case LED81:
+ 287   2      
+ 288   2               GET2=0;
+ 289   2               GET3=1;
+ 290   2              for(i=0;i<LED_cycle_cnt;i++)
+ 291   2                {
+ 292   3                COM1=0;
+ 293   3                Delay1us(LED_Duty);
+ 294   3                COM1=1;
+ 295   3                Delay1us(LED_cycle-LED_Duty);
+ 296   3                }
+ 297   2             LED_Count++;
+ 298   2                RELOAD_RWK(0xfe); 
+ 299   2        break;
+ 300   2        case LED80:
+ 301   2              COM1=1;
+ 302   2              RELOAD_RWK(0xff-LED_CLOSE_T);
+C51 COMPILER V9.52.0.0   WORK                                                              10/22/2019 13:36:58 PAGE 6   
+
+ 303   2               Seconds++;
+ 304   2             if(Seconds%5==4)
+ 305   2             {LED_Count++;}
+ 306   2             else
+ 307   2             {LED_Count--;}
+ 308   2        break;  
+ 309   2        case LED91:
+ 310   2              for(i=0;i<LED_cycle_cnt;i++)
+ 311   2                {
+ 312   3                COM2=0;
+ 313   3                Delay1us(LED_Duty);
+ 314   3                COM2=1;
+ 315   3                Delay1us(LED_cycle-LED_Duty);
+ 316   3                }
+ 317   2           LED_Count++;
+ 318   2                RELOAD_RWK(0xfe); 
+ 319   2        break;
+ 320   2        case LED90:
+ 321   2              COM2=1;
+ 322   2              RELOAD_RWK(0xff-LED_CLOSE_T);
+ 323   2               Seconds++;
+ 324   2             if(Seconds%5==4)
+ 325   2             {LED_Count++;}
+ 326   2             else
+ 327   2             {LED_Count--;}
+ 328   2        break;  
+ 329   2        case LEDA1:
+ 330   2              for(i=0;i<LED_cycle_cnt;i++)
+ 331   2                {
+ 332   3                COM3=0;
+ 333   3                Delay1us(LED_Duty);
+ 334   3                COM3=1;
+ 335   3                Delay1us(LED_cycle-LED_Duty);
+ 336   3                }
+ 337   2          LED_Count++;
+ 338   2                RELOAD_RWK(0xfe); 
+ 339   2        break;
+ 340   2        case LEDA0:
+ 341   2               COM3=1;
+ 342   2               RELOAD_RWK(0xff-LED_CLOSE_T);
+ 343   2               Seconds++;
+ 344   2             if(Seconds%5==4)
+ 345   2             {LED_Count++;}
+ 346   2             else
+ 347   2             {LED_Count--;}
+ 348   2        break;
+ 349   2        case LEDB1:
+ 350   2              for(i=0;i<LED_cycle_cnt;i++)
+ 351   2                {
+ 352   3                COM4=0;
+ 353   3                Delay1us(LED_Duty);
+ 354   3                COM4=1;
+ 355   3                Delay1us(LED_cycle-LED_Duty);
+ 356   3                }
+ 357   2      LED_Count++;
+ 358   2      RELOAD_RWK(0xfe);           
+ 359   2        break;  
+ 360   2        case LEDB0:
+ 361   2              COM4=1;
+ 362   2               RELOAD_RWK(0xff-LED_CLOSE_T);
+ 363   2          LED_Count=LEDC1;
+ 364   2               Seconds++;
+C51 COMPILER V9.52.0.0   WORK                                                              10/22/2019 13:36:58 PAGE 7   
+
+ 365   2             if(Seconds%5==4)
+ 366   2             {LED_Count=LEDC1;}
+ 367   2             else
+ 368   2             {LED_Count--;}
+ 369   2        break;
+ 370   2        }
+ 371   1      //RWK=0xff-LED_OPEN_T;
+ 372   1      //RWK=0xff-RWK_T; 
+ 373   1      // //LED_Count++;
+ 374   1      //if((LED_Count&0x01)==0)
+ 375   1      //{ LED_Count++;}
+ 376   1      //else
+ 377   1      //{  
+ 378   1      //  if(Seconds%5==4)
+ 379   1      //  {
+ 380   1      ////    Seconds=0;
+ 381   1      //   LED_Count++;}
+ 382   1      //  
+ 383   1      //  else LED_Count--;
+ 384   1      //   
+ 385   1      //   Seconds++;
+ 386   1      //}
+ 387   1      //  if(LED_Count>=24)
+ 388   1      //  {  LED_Count=0;
+ 389   1      //     LED_Cycle++;}
+ 390   1      
+ 391   1       
+ 392   1           
+ 393   1           
+ 394   1           
+ 395   1           
+ 396   1           
+ 397   1           
+ 398   1      } 
+*** WARNING C280 IN LINE 89 OF ..\Code\Work.c: 'RWK_T': unreferenced local variable
+ 399           
+ 400           
+ 401           
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1501    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     31       1
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

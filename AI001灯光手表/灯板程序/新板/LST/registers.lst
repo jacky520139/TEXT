@@ -1,0 +1,140 @@
+C51 COMPILER V9.52.0.0   REGISTERS                                                         10/31/2019 17:34:50 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE REGISTERS
+OBJECT MODULE PLACED IN ..\Output\registers.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Code\registers.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR
+                    -(..\Common;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\LST\registers.lst) TABS(2) OBJECT(..\Output\registers.obj)
+
+line level    source
+
+   1          /*
+   2              Copyright (c) 2006 Michael P. Thompson <mpthompson@gmail.com>
+   3          
+   4              Permission is hereby granted, free of charge, to any person
+   5              obtaining a copy of this software and associated documentation
+   6              files (the "Software"), to deal in the Software without
+   7              restriction, including without limitation the rights to use, copy,
+   8              modify, merge, publish, distribute, sublicense, and/or sell copies
+   9              of the Software, and to permit persons to whom the Software is
+  10              furnished to do so, subject to the following conditions:
+  11          
+  12              The above copyright notice and this permission notice shall be
+  13              included in all copies or substantial portions of the Software.
+  14          
+  15              THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+  16              EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+  17              MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+  18              NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+  19              HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+  20              WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  21              OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+  22              DEALINGS IN THE SOFTWARE.
+  23          
+  24              $Id$
+  25          */
+  26          
+  27          
+  28          #include "ALL_Includes.h"
+  29          // Register values.
+  30          //u8 registers[REGISTER_COUNT];
+  31          
+  32          //void registers_init(void)
+  33          //// Function to initialize all registers.
+  34          //{
+  35          //    // Initialize all registers to zero.
+  36          //    memset(&registers[0], 0, REGISTER_COUNT);
+  37          
+  38          //    // Set device and software identification information.
+  39          ////    registers_write_byte(REG_DEVICE_TYPE, OPENSERVO_DEVICE_TYPE);//写入伺服类型
+  40          ////    registers_write_byte(REG_DEVICE_SUBTYPE, OPENSERVO_DEVICE_SUBTYPE);//定义子类型
+  41          ////    registers_write_byte(REG_VERSION_MAJOR, SOFTWARE_VERSION_MAJOR);//写入版本号
+  42          ////    registers_write_byte(REG_VERSION_MINOR, SOFTWARE_VERSION_MINOR);
+  43          
+  44          //    // Restore the read/write protected registers from EEPROM.  If the
+  45          //    // EEPROM fails checksum this function will return zero and the
+  46          //    // read/write protected registers should be initialized to defaults.
+  47          //    if (!eeprom_restore_registers())
+  48          //    {
+  49          //        // Reset read/write protected registers to zero.
+  50          //        memset(&registers[MIN_WRITE_PROTECT_REGISTER], WRITE_PROTECT_REGISTER_COUNT + REDIRECT_REGISTER_
+             -COUNT, REGISTER_COUNT);
+  51          
+  52          //        registers_defaults();
+  53          //    }
+C51 COMPILER V9.52.0.0   REGISTERS                                                         10/31/2019 17:34:50 PAGE 2   
+
+  54          ////     pwm_registers_defaults();
+  55          //}
+  56          
+  57          
+  58          //void registers_defaults(void)
+  59          //// Reset safe read/write registers to defaults.
+  60          //{
+  61          
+  62          //    pwm_registers_defaults();
+  63          
+  64          
+  65          //    pid_registers_defaults();
+  66          //}
+  67          
+  68          
+  69          //u16 registers_read_word(u8 address_hi, u8 address_lo)
+  70          //// Read a 16-bit word from the registers.
+  71          //// Interrupts are disabled during the read.
+  72          //{
+  73          ////    u8 sreg;
+  74          //    u16 value;
+  75          
+  76          
+  77          //    // Clear interrupts.
+  78          ////    asm volatile ("in %0,__SREG__\n\tcli\n\t" : "=&r" (sreg));
+  79          //    EA=0;
+  80          //    // Read the registers.
+  81          //    value = (registers[address_hi] << 8) | registers[address_lo];
+  82          
+  83          //    // Restore status.
+  84          ////    asm volatile ("out __SREG__,%0\n\t" : : "r" (sreg));
+  85          // EA=1;
+  86          //    return value;
+  87          //}
+  88          
+  89          
+  90          //void registers_write_word(u8 address_hi, u8 address_lo, u16 value)
+  91          //// Write a 16-bit word to the registers.
+  92          //// Interrupts are disabled during the write.
+  93          //{
+  94          ////    u8 sreg;
+  95          
+  96          //    // Clear interrupts.
+  97          ////    asm volatile ("in %0,__SREG__\n\tcli\n\t" : "=&r" (sreg));
+  98          //    EA=0;
+  99          //    // Write the registers.
+ 100          //    registers[address_hi] = value >> 8;
+ 101          //    registers[address_lo] = value;
+ 102          //    EA=1;
+ 103          //    // Restore status.
+ 104          ////    asm volatile ("out __SREG__,%0\n\t" : : "r" (sreg));
+ 105          //}
+ 106          
+ 107          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   ----    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+C51 COMPILER V9.52.0.0   REGISTERS                                                         10/31/2019 17:34:50 PAGE 3   
+
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

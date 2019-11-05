@@ -1,0 +1,6 @@
+Added Component: Designator=K2(四向滚珠开关)
+Added Pin To Net: NetName=GND Pin=K2-1
+Added Pin To Net: NetName=KEY Pin=K2-2
+Added Pin To Net: NetName=KEY Pin=K2-3
+Added Pin To Net: NetName=GND Pin=K2-4
+Added Member To Class: ClassName=LED_12T-V1.1 Member=Component K2 SW-02

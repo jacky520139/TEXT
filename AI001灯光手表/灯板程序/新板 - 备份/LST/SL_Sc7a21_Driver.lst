@@ -1,0 +1,640 @@
+C51 COMPILER V9.52.0.0   SL_SC7A21_DRIVER                                                  10/28/2019 14:49:17 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE SL_SC7A21_DRIVER
+OBJECT MODULE PLACED IN ..\Output\SL_Sc7a21_Driver.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Code\SL_Sc7a21_Driver.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE
+                    - INCDIR(..\Common;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\LST\SL_Sc7a21_Driver.lst) TABS(2) OBJECT(..\Output\SL_Sc7a
+                    -21_Driver.obj)
+
+line level    source
+
+   1          
+   2          #include "ALL_Includes.h"
+   3          
+   4          
+   5          #define SL_SC7A21_DEBUG 0
+   6          #if SL_SC7A21_DEBUG==1
+              #include "usart.h"
+              #endif
+   9          
+  10          static unsigned int   SL_Step_Value_Temp=0; 
+  11          
+  12          /***************ÔÚÏß²âÊÔ**********************/
+  13          signed char  SL_SC7A21_Online_Test(unsigned char Sl_pull_up_mode)
+  14          {
+  15   1          unsigned char SL_Read_Reg=0xff;
+  16   1          
+  17   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE, SL_SC7A21_SDO_I2C_PU_CFG, 1, &SL_Read_Reg);
+  18   1          SL_Read_Reg=(SL_Read_Reg&0xF3)|Sl_pull_up_mode;
+  19   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_SDO_I2C_PU_CFG, SL_Read_Reg); 
+  20   1          
+  21   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SC7A21_CHIP_ID_ADDRESS,1, &SL_Read_Reg); 
+  22   1          if(SL_Read_Reg==SC7A21_CHIP_ID_VALUE)   return  1;
+  23   1          else                                    return -1;
+  24   1      }
+  25          
+  26          /***************¸´Î»,Í¬Ê±BOOT ÖØÔØÄÚ²¿¼Ä´æÆ÷Öµ*********************/
+  27          signed char  SL_SC7A21_BOOT_RESET(void)
+  28          {
+  29   1          unsigned char SL_Read_Reg=0xff;
+  30   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_SOFT_RESET_REG,1, &SL_Read_Reg);
+  31   1          SL_Read_Reg=SL_Read_Reg|SL_SC7A21_SOFT_RESET_VALUE;
+  32   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_SOFT_RESET_REG, SL_Read_Reg);//RESET
+  33   1          
+  34   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG5,1, &SL_Read_Reg);
+  35   1          SL_Read_Reg=SL_SC7A21_BOOT_EN|SL_Read_Reg;
+  36   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG5, SL_Read_Reg);//BOOT 
+  37   1          
+  38   1          return  1;
+  39   1      }
+  40          
+  41          /***************´«¸ÐÆ÷Á¿³ÌÉèÖÃ**********************/
+  42          signed char  SL_SC7A21_FS_Config(unsigned char SC7A21_FS_Reg)
+  43          {
+  44   1          unsigned char SL_Read_Reg=0xff,SL_Write_Reg;
+  45   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG4,1, &SL_Read_Reg); 
+  46   1          SL_Write_Reg=0x80|SC7A21_FS_Reg|SL_SC7A21_DATA_DLPF_EN;
+  47   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG4, SL_Write_Reg);
+  48   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG4,1, &SL_Read_Reg); 
+  49   1          if(SL_Read_Reg==SL_Write_Reg)   return  1;
+  50   1          else                            return -1;
+  51   1      }
+  52          
+  53          /***************Êý¾Ý¸üÐÂËÙÂÊ**¼ÓËÙ¶È¼ÆÊ¹ÄÜ**********/
+C51 COMPILER V9.52.0.0   SL_SC7A21_DRIVER                                                  10/28/2019 14:49:17 PAGE 2   
+
+  54          signed char  SL_SC7A21_Power_Config(unsigned char ODR_Config_Reg,unsigned char Power_Mode)
+  55          {
+  56   1          unsigned char SL_Read_Reg;
+  57   1          unsigned char SL_Write_Reg; 
+  58   1          if(Power_Mode == 0 ||Power_Mode == 1)//disable hi-pwr mode
+  59   1          {
+  60   2              SL_Write_Reg=SL_SC7A21_ABW_50HZ|SL_SC7A21_ALPF_EN|SL_SC7A21_HI_PWR_EN;
+  61   2              SL_Write_Reg=~SL_Write_Reg;
+  62   2              SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG0,1, &SL_Read_Reg);
+  63   2              SL_Read_Reg=SL_Read_Reg&SL_Write_Reg;
+  64   2              SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG0, SL_Read_Reg);
+  65   2          }
+  66   1          else if(Power_Mode == 2)
+  67   1          {
+  68   2              SL_Read_Reg  = 0x00;
+  69   2              SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG0,1, &SL_Read_Reg);
+  70   2              SL_Read_Reg=SL_Read_Reg|SL_SC7A21_ABW_50HZ|SL_SC7A21_ALPF_EN|SL_SC7A21_HI_PWR_EN;
+  71   2              SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG0, SL_Read_Reg);    
+  72   2          }
+  73   1          
+  74   1          if(Power_Mode == 0&& ODR_Config_Reg<0x97)
+  75   1          {
+  76   2              ODR_Config_Reg=ODR_Config_Reg|0x0F;
+  77   2          }
+  78   1      
+  79   1          SL_Read_Reg  = 0xff;
+  80   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG1, ODR_Config_Reg);
+  81   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG1,1, &SL_Read_Reg); 
+  82   1      
+  83   1          if(SL_Read_Reg==ODR_Config_Reg)   return  1;
+  84   1          else                                return -1;
+  85   1      }
+  86          
+  87          /***************Êý¾Ý¸üÐÂËÙÂÊ**¼ÓËÙ¶È¼ÆÊ¹ÄÜ**********/
+  88          signed char  SL_SC7A21_FIFO_Config(unsigned char Fifo_Mode,unsigned char Fifo_Bit)
+  89          {
+  90   1          unsigned char SL_Read_Reg;
+  91   1          unsigned char SL_Write_Reg;
+  92   1                 
+  93   1          if(Fifo_Mode == SL_SC7A21_FIFO_MODE_DIS)//disable hi-pwr mode
+  94   1          {
+  95   2              SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_FIFO_CTRL_REG,1, &SL_Read_Reg);
+  96   2              SL_Read_Reg=SL_Read_Reg&SL_SC7A21_FIFO_FM_MSK;
+  97   2              SL_Read_Reg=SL_Read_Reg|SL_SC7A21_FIFO_FM_BYPASS;
+  98   2              SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_FIFO_CTRL_REG, SL_Read_Reg);
+  99   2          }
+ 100   1          else if(Fifo_Mode == SL_SC7A21_FIFO_MODE_EN)
+ 101   1          {
+ 102   2              SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_FIFO_CTRL_REG,1, &SL_Read_Reg);
+ 103   2              SL_Read_Reg=SL_Read_Reg&SL_SC7A21_FIFO_FM_MSK;
+ 104   2              SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_FIFO_CTRL_REG, SL_Read_Reg);
+ 105   2              SL_Read_Reg=SL_Read_Reg|SL_SC7A21_FIFO_FM_FIFO;
+ 106   2              SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_FIFO_CTRL_REG, SL_Read_Reg);   
+ 107   2          }
+ 108   1          else if(Fifo_Mode == SL_SC7A21_STREAM_MODE_EN)
+ 109   1          {
+ 110   2              SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_FIFO_CTRL_REG,1, &SL_Read_Reg);
+ 111   2              SL_Read_Reg=SL_Read_Reg&SL_SC7A21_FIFO_FM_MSK;
+ 112   2              SL_Read_Reg=SL_Read_Reg|SL_SC7A21_FIFO_FM_STREAM;
+ 113   2              SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_FIFO_CTRL_REG, SL_Read_Reg);     
+ 114   2          }
+ 115   1          
+C51 COMPILER V9.52.0.0   SL_SC7A21_DRIVER                                                  10/28/2019 14:49:17 PAGE 3   
+
+ 116   1          if(Fifo_Bit == SL_SC7A21_FIFO_16BITS_MODE)//16BITS FIFO MODE
+ 117   1          {
+ 118   2              SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG5,1, &SL_Read_Reg);
+ 119   2              SL_Read_Reg=SL_Read_Reg&SL_SC7A21_FIFO_BITS_MSK;
+ 120   2              SL_Read_Reg=SL_Read_Reg|SL_SC7A21_FIFO_16BITS;       
+ 121   2              SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG5, SL_Read_Reg);
+ 122   2          }
+ 123   1          else if(Fifo_Bit == SL_SC7A21_FIFO_8BITS_MODE)//8BITS FIFO MODE
+ 124   1          {
+ 125   2              SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG5,1, &SL_Read_Reg);
+ 126   2              SL_Read_Reg=SL_Read_Reg&SL_SC7A21_FIFO_BITS_MSK;
+ 127   2              SL_Read_Reg=SL_Read_Reg|SL_SC7A21_FIFO_8BITS;       
+ 128   2              SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG5, SL_Read_Reg);   
+ 129   2          }
+ 130   1          
+ 131   1          return  1;
+ 132   1      }
+*** WARNING C280 IN LINE 91 OF ..\Code\SL_Sc7a21_Driver.c: 'SL_Write_Reg': unreferenced local variable
+ 133          
+ 134          unsigned char SL_SC7A21_INT_Config(unsigned char int_para)
+ 135          {
+ 136   1          unsigned char SL_Read_Reg;
+ 137   1      
+ 138   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG6, int_para);
+ 139   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG6,1, &SL_Read_Reg);
+ 140   1          
+ 141   1          if(SL_Read_Reg==int_para)     return 1;
+ 142   1          else                          return 0;
+ 143   1      }
+ 144          
+ 145          
+ 146          #if   SL_SC7A21_16BIT_8BIT==0
+              /***************¼ÓËÙ¶È¼ÆÊý¾Ý¶ÁÈ¡*8bits*********/
+              signed char  SL_SC7A21_Read_XYZ_Data(signed char *SL_SC7A21_Data_XYZ_Buf)
+              {
+                  unsigned char SL_Read_Buf[6];
+                  
+                  SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_DRDY_REG,1, &SL_Read_Buf[0]);//Êý¾Ý×´Ì¬¼Ä´æÆ÷
+                  
+                  if((SL_Read_Buf[0]&0x0f)==0x0f)
+                  {
+              #if   SL_SC7A21_SPI_IIC_MODE ==1//IIC
+                      SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_DATA_OUT,6, &SL_Read_Buf[0]);
+              #elif SL_SC7A21_SPI_IIC_MODE ==0//SPI
+                      SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_OUT_X_L,6, &SL_Read_Buf[0]);  
+              #endif
+                      SL_SC7A21_Data_XYZ_Buf[0]=(signed char)SL_Read_Buf[1];
+                      SL_SC7A21_Data_XYZ_Buf[1]=(signed char)SL_Read_Buf[3];
+                      SL_SC7A21_Data_XYZ_Buf[2]=(signed char)SL_Read_Buf[5];
+              
+                      return  1;
+                  }
+                  else
+                  {
+                      return 0;
+                  }
+              }
+              #elif SL_SC7A21_16BIT_8BIT==1
+ 173          /***************¼ÓËÙ¶È¼ÆÊý¾Ý¶ÁÈ¡*16bits*********/
+ 174          signed char  SL_SC7A21_Read_XYZ_Data(signed short *SL_SC7A21_Data_XYZ_Buf)
+ 175          {
+ 176   1          unsigned char SL_Read_Buf[6];
+C51 COMPILER V9.52.0.0   SL_SC7A21_DRIVER                                                  10/28/2019 14:49:17 PAGE 4   
+
+ 177   1          
+ 178   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_DRDY_REG,1, &SL_Read_Buf[0]);//Êý¾Ý×´Ì¬¼Ä´æÆ÷
+ 179   1          
+ 180   1          if((SL_Read_Buf[0]&0x0f)==0x0f)
+ 181   1          {
+ 182   2      #if   SL_SC7A21_SPI_IIC_MODE ==1//IIC
+ 183   2              SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_DATA_OUT,6, &SL_Read_Buf[0]);
+ 184   2      #elif SL_SC7A21_SPI_IIC_MODE ==0//SPI
+                      SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_OUT_X_L,6, &SL_Read_Buf[0]);  
+              #endif   
+ 187   2              SL_SC7A21_Data_XYZ_Buf[0]=(signed short)((SL_Read_Buf[1]<<8) + SL_Read_Buf[0]);
+ 188   2              SL_SC7A21_Data_XYZ_Buf[1]=(signed short)((SL_Read_Buf[3]<<8) + SL_Read_Buf[2]);
+ 189   2              SL_SC7A21_Data_XYZ_Buf[2]=(signed short)((SL_Read_Buf[5]<<8) + SL_Read_Buf[4]);
+ 190   2               
+ 191   2              return  1;
+ 192   2          }
+ 193   1          else
+ 194   1          {
+ 195   2              return 0;
+ 196   2          }
+ 197   1      }
+ 198          #endif
+ 199          
+ 200          
+ 201          #if   SL_SC7A21_FIFO_16BIT_8BIT==0
+              /***************¼ÓËÙ¶È¼ÆÊý¾Ý¶ÁÈ¡*8bits*********/
+              signed char  SL_SC7A21_Read_XYZ_FIFO_Data(signed char *SL_SC7A21_Data_X_Buf,signed char *SL_SC7A21_Data_Y_
+             -Buf,signed char *SL_SC7A21_Data_Z_Buf)
+              {
+                  unsigned char SL_Read_Buf[6],FIFO_LEN;
+                  unsigned char sl_i;
+                  
+                  SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_FIFO_SRC_REG,1, &SL_Read_Buf[0]);
+                  if((SL_Read_Buf[0]&SL_SC7A21_FIFO_OVER_FLAG)==SL_SC7A21_FIFO_OVER_FLAG)
+                      FIFO_LEN=64;
+                  else
+                      FIFO_LEN=SL_Read_Buf[0]&SL_SC7A21_FIFO_8FSS_FLAG;
+                  
+                  for(sl_i=0;sl_i<FIFO_LEN;sl_i++)
+                  {   
+              #if     SL_SC7A21_SPI_IIC_MODE ==1//IIC
+                      SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_DATA_OUT,6, &SL_Read_Buf[0]);
+              #elif   SL_SC7A21_SPI_IIC_MODE ==0//SPI
+                      SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_OUT_X_L,6, &SL_Read_Buf[0]);  
+              #endif
+                      SL_SC7A21_Data_X_Buf[sl_i]=SL_Read_Buf[0];
+                      SL_SC7A21_Data_Y_Buf[sl_i]=SL_Read_Buf[2];
+                      SL_SC7A21_Data_Z_Buf[sl_i]=SL_Read_Buf[4];
+                      sl_i++;
+                      SL_SC7A21_Data_X_Buf[sl_i]=SL_Read_Buf[1];
+                      SL_SC7A21_Data_Y_Buf[sl_i]=SL_Read_Buf[3];
+                      SL_SC7A21_Data_Z_Buf[sl_i]=SL_Read_Buf[5];
+                  }
+                  
+                  return  FIFO_LEN;
+              }
+              #elif SL_SC7A21_FIFO_16BIT_8BIT==1
+ 233          /***************¼ÓËÙ¶È¼ÆÊý¾Ý¶ÁÈ¡*16bits*********/
+ 234          signed char  SL_SC7A21_Read_XYZ_FIFO_Data(signed short *SL_SC7A21_Data_X_Buf,signed short *SL_SC7A21_Data_
+             -Y_Buf,signed short *SL_SC7A21_Data_Z_Buf)
+ 235          {
+ 236   1          unsigned char SL_Read_Buf[6],FIFO_LEN;
+C51 COMPILER V9.52.0.0   SL_SC7A21_DRIVER                                                  10/28/2019 14:49:17 PAGE 5   
+
+ 237   1          unsigned char sl_i;
+ 238   1          
+ 239   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_FIFO_SRC_REG,1, &SL_Read_Buf[0]);
+ 240   1          if((SL_Read_Buf[0]&SL_SC7A21_FIFO_OVER_FLAG)==SL_SC7A21_FIFO_OVER_FLAG)
+ 241   1              FIFO_LEN=32;
+ 242   1          else
+ 243   1              FIFO_LEN=SL_Read_Buf[0]&SL_SC7A21_FIFO_16FSS_FLAG;
+ 244   1       
+ 245   1          for(sl_i=0;sl_i<FIFO_LEN;sl_i++)
+ 246   1          {   
+ 247   2      #if     SL_SC7A21_SPI_IIC_MODE ==1//IIC
+ 248   2              SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_DATA_OUT,6, &SL_Read_Buf[0]);
+ 249   2      #elif   SL_SC7A21_SPI_IIC_MODE ==0//SPI
+                      SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_OUT_X_L,6, &SL_Read_Buf[0]);  
+              #endif
+ 252   2              
+ 253   2              SL_SC7A21_Data_X_Buf[sl_i]=(signed short)((SL_Read_Buf[1]<<8) + SL_Read_Buf[0]);
+ 254   2              SL_SC7A21_Data_Y_Buf[sl_i]=(signed short)((SL_Read_Buf[3]<<8) + SL_Read_Buf[2]);
+ 255   2              SL_SC7A21_Data_Z_Buf[sl_i]=(signed short)((SL_Read_Buf[5]<<8) + SL_Read_Buf[4]);
+ 256   2          }
+ 257   1          return  FIFO_LEN;
+ 258   1      }
+ 259          #endif
+ 260          
+ 261          void SL_SC7A21_Pedo_Reset(void)
+ 262          {
+ 263   1          unsigned char SL_Read_Reg;
+ 264   1       
+ 265   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_STEP_CTRL_REG0,1, &SL_Read_Reg);
+ 266   1          SL_Read_Reg=SL_Read_Reg|SL_SC7A21_STEP_CLEAR_EN;
+ 267   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_STEP_CTRL_REG0, SL_Read_Reg); 
+ 268   1          SL_Step_Value_Temp=0;
+ 269   1          
+ 270   1      }
+ 271          
+ 272          void SL_SC7A21_Pedo_Config(unsigned char *pedo_reg_value)
+ 273          {
+ 274   1          unsigned char SL_Write_Reg;
+ 275   1          
+ 276   1          //INT_SET  STEP_EN  0x05,0xA4,0x1F,0x37,   0x0F,0xFF,0x00
+ 277   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_STEP_CTRL_REG0, pedo_reg_value[0]);//¼Æ²½¿ØÖÆ
+             -¼Ä´æÆ÷ 0
+ 278   1          //STEP_SET
+ 279   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_STEP_CTRL_REG1, pedo_reg_value[1]);//¼Æ²½Öµ¿Ø
+             -ÖÆ¼Ä´æÆ÷ 1
+ 280   1          //STEP_SET
+ 281   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_STEP_CTRL_REG2, pedo_reg_value[2]);//¼Æ²½Öµ¿Ø
+             -ÖÆ¼Ä´æÆ÷ 2
+ 282   1          //STEP_SET
+ 283   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_STEP_CTRL_REG3, pedo_reg_value[3]);//¼Æ²½Öµ¿Ø
+             -ÖÆ¼Ä´æÆ÷ 3
+ 284   1          //DELTA
+ 285   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_STEP_DELTA_REG, pedo_reg_value[4]);//¼Æ²½²îÖµ
+             -¿ØÖÆ¼Ä´æÆ÷
+ 286   1          //WTM_SET
+ 287   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_STEP_WTM_REG0, pedo_reg_value[5]);//WTM0_SET¼
+             -Æ²½ãÐÖµÉèÖÃ¼Ä´æÆ÷ µÍÎ»
+ 288   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_STEP_WTM_REG1, pedo_reg_value[6]);//WTM1_SET¼
+             -Æ²½ãÐÖµÉèÖÃ¼Ä´æÆ÷ ¸ßÎ»
+ 289   1      
+ 290   1          SL_SC7A21_Pedo_Reset();
+ 291   1      
+C51 COMPILER V9.52.0.0   SL_SC7A21_DRIVER                                                  10/28/2019 14:49:17 PAGE 6   
+
+ 292   1      }
+*** WARNING C280 IN LINE 274 OF ..\Code\SL_Sc7a21_Driver.c: 'SL_Write_Reg': unreferenced local variable
+ 293          
+ 294          static unsigned char sl_wrist_int_status=0;
+ 295          static unsigned char sl_wrist_int_pin=0;
+ 296          void SL_SC7A21_Wrist_Config(unsigned char *wrist_reg_value)
+ 297          {
+ 298   1          //INT_SET  WRIST_EN 0x31,0x31,0x00,0x93
+ 299   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_WRIST_CTRL_REG0, wrist_reg_value[0]);
+ 300   1          sl_wrist_int_status=wrist_reg_value[0];  
+ 301   1          sl_wrist_int_pin=0;
+ 302   1          if(sl_wrist_int_status&0xC0)//Ó³Éäµ½ÖÐ¶Ï2½Å
+ 303   1          {
+ 304   2              sl_wrist_int_pin=0x40;
+ 305   2          }
+ 306   1          if(sl_wrist_int_status&0x30)//*Ó³Éäµ½ÖÐ¶Ï1½Å
+ 307   1          {
+ 308   2              sl_wrist_int_pin=sl_wrist_int_pin|0x10;
+ 309   2          }
+ 310   1      
+ 311   1          //WRIST_SET
+ 312   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_WRIST_CTRL_REG1, wrist_reg_value[1]);
+ 313   1          //WRIST_ANGLE
+ 314   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_WRIST_CTRL_REG2, wrist_reg_value[2]);
+ 315   1          //WRIST_SET
+ 316   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_WRIST_CTRL_REG3, wrist_reg_value[3]);  
+ 317   1      }
+ 318          
+ 319          void SL_SC7A21_Sleep_Config(unsigned char *sleep_reg_value)
+ 320          {
+ 321   1          unsigned char SL_Write_Reg;
+ 322   1      
+ 323   1          //SLEEP_SET SLEEP_EN
+ 324   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_SLEEP_CTRL_REG0, SL_Write_Reg); 
+ 325   1          //SLEEP_SET
+ 326   1          SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_SLEEP_CTRL_REG1, SL_Write_Reg); 
+ 327   1      
+ 328   1      }
+*** WARNING C280 IN LINE 319 OF ..\Code\SL_Sc7a21_Driver.c: 'sleep_reg_value': unreferenced local variable
+ 329          
+ 330          //recommend IN TIMER  1s
+ 331          unsigned int  SL_SC7A21_Get_Pedo_Count(void)
+ 332          {
+ 333   1          unsigned char SL_Step_Reg[3];
+ 334   1          unsigned int  SL_Step_Value;
+ 335   1          
+ 336   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_STEP_OUT_REG,3, &SL_Step_Reg[0]);
+ 337   1          
+ 338   1          SL_Step_Value=(SL_Step_Reg[2]<<16)|(SL_Step_Reg[1]<<8)|(SL_Step_Reg[0]);
+ 339   1      
+ 340   1          if(SL_Step_Value-SL_Step_Value_Temp>100)//Èç¹û1ÃëÖÓ²½Êý³¬¹ý100²½£¬ÔòÎªÒì³££¬²½¸üÐÂ²½Êý
+ 341   1          {
+ 342   2              return SL_Step_Value_Temp;
+ 343   2          }
+ 344   1          else
+ 345   1          {
+ 346   2              SL_Step_Value_Temp=SL_Step_Value;
+ 347   2              return SL_Step_Value;
+ 348   2          }
+ 349   1      }
+ 350          
+ 351          //recommend IN INT SERVICE READ THIS
+C51 COMPILER V9.52.0.0   SL_SC7A21_DRIVER                                                  10/28/2019 14:49:17 PAGE 7   
+
+ 352          unsigned char  SL_SC7A21_Get_Wrist_Status(void)
+ 353          {
+ 354   1          unsigned char SL_Read_Reg;
+ 355   1          unsigned char SL_Write_Reg;  
+ 356   1      
+ 357   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_WRIST_STATUS_REG,1, &SL_Read_Reg);
+ 358   1      
+ 359   1          if(SL_Read_Reg&0x06)//on or down
+ 360   1          {   
+ 361   2              //now on int happen,and set on int before
+ 362   2              if((((SL_Read_Reg&0x02)==0x02)&&((sl_wrist_int_status&sl_wrist_int_pin)==0x00))||
+ 363   2                 (((SL_Read_Reg&0x04)==0x04)&&((sl_wrist_int_status&sl_wrist_int_pin)!=0x00)))
+ 364   2              {    
+ 365   3                  SL_Write_Reg = (~sl_wrist_int_status)&sl_wrist_int_pin;  
+ 366   3                  sl_wrist_int_status = (sl_wrist_int_status&0xAF)|SL_Write_Reg;        
+ 367   3                  SL_Write_Reg=sl_wrist_int_status;
+ 368   3                  SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_WRIST_CTRL_REG0, SL_Write_Reg);
+ 369   3              }         
+ 370   2          }
+ 371   1        
+ 372   1          if((SL_Read_Reg&SL_SC7A21_WRIST_ON_STATUS)==SL_SC7A21_WRIST_ON_STATUS)
+ 373   1          {     
+ 374   2              //open down function 
+ 375   2              return 1;//turn on wrist
+ 376   2          }
+ 377   1          else if((SL_Read_Reg&SL_SC7A21_WRIST_DOWN_STATUS)==SL_SC7A21_WRIST_DOWN_STATUS)
+ 378   1          {
+ 379   2              //open on function
+ 380   2              return 2;//turn down wrist
+ 381   2          }
+ 382   1          else
+ 383   1          {
+ 384   2              return 0;//no wrist action
+ 385   2          }
+ 386   1      }
+ 387          
+ 388          //IN TIMER  60s 
+ 389          #define SL_SLEEP_STATUS_ENABLE    1
+ 390          unsigned char  SL_SC7A21_Get_Sleep_Status(void)
+ 391          {
+ 392   1          unsigned char SL_Sleep_Status;
+ 393   1      
+ 394   1      #if SL_SLEEP_STATUS_ENABLE==1
+ 395   1          SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_SLP_LEVEL_REG,1, &SL_Sleep_Status);
+ 396   1      #else
+                  SL_SC7A21_I2c_Spi_Read(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_SLP_ACT_SRC_REG,1, &SL_Sleep_Status);
+              #endif
+ 399   1          //0£ºwake        7:deep sleep
+ 400   1          return SL_Sleep_Status;
+ 401   1      }
+ 402          
+ 403          void SL_SC7A21_Single_Click_Config(unsigned char *click_para)//if config the click function
+ 404          {
+ 405   1        //if config the click function 0x01,0x3C,0x82,0x15,0x48,0x04,0x17
+ 406   1        if(click_para[0]==0x00)
+ 407   1        {
+ 408   2          SL_SC7A21_Power_Config(SL_SC7A21_ODR_200HZ,1);//200Hz
+ 409   2        }
+ 410   1        else
+ 411   1        {
+ 412   2          SL_SC7A21_Power_Config(SL_SC7A21_ODR_400HZ,0);//400Hz
+ 413   2        }
+C51 COMPILER V9.52.0.0   SL_SC7A21_DRIVER                                                  10/28/2019 14:49:17 PAGE 8   
+
+ 414   1        
+ 415   1        SL_SC7A21_FIFO_Config(SL_SC7A21_STREAM_MODE_EN,SL_SC7A21_FIFO_8BITS_MODE);//STREAM MODE£¬8BITS MODE
+ 416   1      
+ 417   1        SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG2, click_para[1]);//Ê¹ÄÜ¸ßÍ¨ÂË²¨Æ÷High-P
+             -ass 0x3C
+ 418   1        
+ 419   1        SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG6, click_para[2]);//CLICK_INT2 ÖÐ¶ÏÊ¹ÄÜ 
+             -0x82
+ 420   1        
+ 421   1        SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CLICK_CFG, click_para[3]);//xyzÖáµ¥»÷ÖÐ¶ÏÊ¹ÄÜ¿ØÖ
+             -Æ 0x15
+ 422   1      
+ 423   1        SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CLICK_THS_REG, click_para[4]);//µ¥Ë«»÷´¥·¢µÄãÐÖµ
+             - 0x48
+ 424   1        
+ 425   1        SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_TIME_LIMIT_REG, click_para[5]);//µ¥Ë«»÷¼ì²âÊ±¼äµ
+             -ÄãÐÖµ 0x04
+ 426   1        
+ 427   1        SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_TIME_LATENCY_REG, click_para[6]);//ÑÓ³ÙÊ±¼ä 0x17
+ 428   1        
+ 429   1        SL_SC7A21_I2c_Spi_Write(SL_SC7A21_SPI_IIC_MODE,SL_SC7A21_CTRL_REG4, 0x90);//Disable DLPF 4g Scale½ûÖ¹µÍÍ¨
+             -ÂË²¨ 4g
+ 430   1      
+ 431   1      }
+ 432          
+ 433          unsigned int SL_Click_Sqrt(unsigned int sqrt_data)//Æ½·½¸ù
+ 434          {
+ 435   1        unsigned int SL_SQRT_LOW,SL_SQRT_UP,SL_SQRT_MID;
+ 436   1        unsigned char sl_sqrt_num=0;
+ 437   1        
+ 438   1        SL_SQRT_LOW=0;
+ 439   1        SL_SQRT_UP=sqrt_data;
+ 440   1        SL_SQRT_MID=(SL_SQRT_UP+SL_SQRT_LOW)/2; 
+ 441   1        while(sl_sqrt_num<200)
+ 442   1        {
+ 443   2          if(SL_SQRT_MID*SL_SQRT_MID>sqrt_data)
+ 444   2          {
+ 445   3            SL_SQRT_UP=SL_SQRT_MID;
+ 446   3          }
+ 447   2          else
+ 448   2          {
+ 449   3            SL_SQRT_LOW=SL_SQRT_MID;        
+ 450   3          }
+ 451   2          if(SL_SQRT_UP-SL_SQRT_LOW==1)
+ 452   2          {
+ 453   3            if(SL_SQRT_UP*SL_SQRT_UP-sqrt_data>sqrt_data-SL_SQRT_LOW*SL_SQRT_LOW)
+ 454   3            {
+ 455   4              return SL_SQRT_LOW;
+ 456   4            }
+ 457   3            else
+ 458   3            {
+ 459   4              return SL_SQRT_UP;
+ 460   4            }
+ 461   3          }
+ 462   2          SL_SQRT_MID=(SL_SQRT_UP+SL_SQRT_LOW)/2; 
+ 463   2          sl_sqrt_num++;
+ 464   2        }
+ 465   1        return 0;
+ 466   1      }
+ 467          
+ 468          #if SL_SC7A21_DEBUG==1
+              extern signed short         SL_DEBUG_DATA[10][128];
+C51 COMPILER V9.52.0.0   SL_SC7A21_DRIVER                                                  10/28/2019 14:49:17 PAGE 9   
+
+              extern unsigned char        SL_DEBUG_DATA_LEN;
+              #endif
+ 472          
+ 473          unsigned char sl_pp_num=0;
+ 474          
+ 475          unsigned char SL_Get_CLICK_PP_CNT(unsigned char fun_flag)
+ 476          {
+ 477   1        if(fun_flag==0)
+ 478   1          sl_pp_num=0;
+ 479   1        return sl_pp_num; 
+ 480   1      }
+ 481          /**Click_TH:ÈýÖáÊ¸Á¿»¯ºÍµÄÅÀÆÂãÐÖµ******************/
+ 482          /**Click_TH:default value=70************************/
+ 483          /**Click_E:ÈýÖáÊ¸Á¿»¯ºÍµÄÉÏÆÂÇ°ÔëÉùãÐÖµ************/
+ 484          /**Click_E:default value=80****ÔëÉùãÐÖµ************/
+ 485          //default set: 4g TH=90
+ 486          unsigned char SL_SC7A21_Click_Algo(unsigned int Click_TH,unsigned char Click_E)//Service function in Int F
+             -unction
+ 487          {
+ 488   1        unsigned char i=0,j=0,k=0;
+ 489   1        unsigned char click_num=0;
+ 490   1        signed char   fifo_data[3][64];
+ 491   1        unsigned char fifo_len;
+ 492   1        unsigned int  sc7a20_data=0;
+ 493   1        unsigned int  fifo_data_xyz[64];
+ 494   1        unsigned char click_result=0x00;  
+ 495   1        unsigned int   click_sum=0; 
+ 496   1        
+ 497   1        fifo_len=SL_SC7A21_Read_XYZ_FIFO_Data(&fifo_data[0][0],&fifo_data[1][0],&fifo_data[2][0]);
+*** WARNING C182 IN LINE 497 OF ..\Code\SL_Sc7a21_Driver.c: pointer to different objects
+*** WARNING C182 IN LINE 497 OF ..\Code\SL_Sc7a21_Driver.c: pointer to different objects
+*** WARNING C182 IN LINE 497 OF ..\Code\SL_Sc7a21_Driver.c: pointer to different objects
+ 498   1        
+ 499   1        for(i=0;i<fifo_len;i++)
+ 500   1        {
+ 501   2          sc7a20_data=(fifo_data[0][i])*(fifo_data[0][i])+(fifo_data[1][i])*(fifo_data[1][i])+(fifo_data[2][i])*(f
+             -ifo_data[2][i]);
+ 502   2          sc7a20_data= SL_Click_Sqrt(sc7a20_data);//Æ½·½¸ù
+ 503   2          fifo_data_xyz[i]=sc7a20_data;
+ 504   2      #if SL_SC7A21_DEBUG==1
+                  SL_DEBUG_DATA[0][i]=fifo_data[0][i];
+                  SL_DEBUG_DATA[1][i]=fifo_data[1][i];  
+                  SL_DEBUG_DATA[2][i]=fifo_data[2][i];    
+                  SL_DEBUG_DATA[3][i]=fifo_data_xyz[i];
+                  SL_DEBUG_DATA_LEN=fifo_len; 
+              #endif
+ 511   2        }
+ 512   1      
+ 513   1        k=0;
+ 514   1        for(i=1;i<fifo_len-1;i++)
+ 515   1        {
+ 516   2          if((fifo_data_xyz[i+1]>Click_TH)&&(fifo_data_xyz[i-1]<30))
+ 517   2          {
+ 518   3            if(click_num==0)
+ 519   3            {
+ 520   4              click_sum=0;//first peak
+ 521   4              for(j=0;j<i-1;j++)
+ 522   4              {
+ 523   5                if(fifo_data_xyz[j]>fifo_data_xyz[j+1])
+ 524   5                {
+ 525   6                  click_sum+=fifo_data_xyz[j]-fifo_data_xyz[j+1]; 
+ 526   6                }
+C51 COMPILER V9.52.0.0   SL_SC7A21_DRIVER                                                  10/28/2019 14:49:17 PAGE 10  
+
+ 527   5                else
+ 528   5                {
+ 529   6                  click_sum+=fifo_data_xyz[j+1]-fifo_data_xyz[j]; 
+ 530   6                }           
+ 531   5              }
+ 532   4      #if SL_SC7A21_DEBUG==1
+                      USART_printf( USART1, "click_sum:%d!\r\n",click_sum);
+              #endif
+ 535   4              if(click_sum>Click_E)
+ 536   4              {
+ 537   5                sl_pp_num++;
+ 538   5                break;
+ 539   5              }
+ 540   4              k=i;
+ 541   4            }
+ 542   3            else
+ 543   3            {
+ 544   4              k=i;//sencond peak·åÖµ
+ 545   4            }
+ 546   3          }
+ 547   2      
+ 548   2          if(k!=0)
+ 549   2          {
+ 550   3            if(fifo_data_xyz[i-1]-fifo_data_xyz[i+1]>Click_TH-10)
+ 551   3            {
+ 552   4              if(i-k<5)
+ 553   4              {
+ 554   5                click_num=1;
+ 555   5                break;
+ 556   5              }
+ 557   4            }
+ 558   3          }
+ 559   2        }
+ 560   1        if(click_num==1)
+ 561   1        {
+ 562   2          click_result=1;
+ 563   2        }
+ 564   1        else
+ 565   1        {
+ 566   2          click_result=0;
+ 567   2        }
+ 568   1        
+ 569   1        return click_result;
+ 570   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   3100    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      5     403
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  6 WARNING(S),  0 ERROR(S)

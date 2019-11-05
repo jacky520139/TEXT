@@ -1,0 +1,4 @@
+Added Component: Designator=RE1(¹öÖé¿ª¹Ø12*3.6)
+Added Pin To Net: NetName=KEY Pin=RE1-1
+Added Pin To Net: NetName=GND Pin=RE1-2
+Added Member To Class: ClassName=LED_12T-V1.1 Member=Component RE1 KEY_M

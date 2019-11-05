@@ -1,0 +1,345 @@
+C51 COMPILER V9.52.0.0   PID                                                               10/11/2019 09:21:58 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE PID
+OBJECT MODULE PLACED IN .\Output\pid.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE Code\pid.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..\..\In
+                    -clude;.\head;.\Common) DEFINE(FOSC_160000) DEBUG PRINT(.\LST\pid.lst) TABS(2) OBJECT(.\Output\pid.obj)
+
+line level    source
+
+   1          
+   2          #include "ALL_Includes.h"
+   3          // The minimum and maximum servo position as defined by 10-bit ADC values.
+   4          #define MIN_POSITION            (0)//◊Ó–°Œª÷√÷µ
+   5          #define MAX_POSITION            0x1000//◊Ó¥ÛŒª÷√÷µ
+   6          // PID ‰≥ˆµƒ◊Ó¥Û◊Ó∫Õ◊Ó–°÷µ
+   7          #define MAX_OUTPUT              (255)//◊Ó¥Û ‰≥ˆ
+   8          #define MIN_OUTPUT              (-MAX_OUTPUT)//◊Ó–° ‰≥ˆ
+   9          
+  10          // Values preserved across multiple PID iterations.
+  11          static int16 previous_seek=-1; // ◊¢“‚:previous_seek = = 1±Ì æ≥ı ºªØÀ˘–Ëµƒ
+  12          static int16 previous_position=0;//…œ“ª¥ŒŒª÷√±‰¡ø
+  13          
+  14          static int16 seek_delta=-1;//ƒø±ÍŒª÷√‘ˆ¡ø
+  15          static int16 position_at_start_of_new_seek=-1;//–¬À——∞µƒø™ ºŒª÷√
+  16          static u8 previous_pwm_is_enabled=0;
+  17          
+  18               int16 seek_position;//ƒø±ÍŒª÷√
+  19               int16 seek_velocity;//—∞«ÛÀŸ∂»
+  20               int16 minimum_position;//◊Ó–°Œª÷√
+  21               int16 maximum_position;//◊Ó¥ÛŒª÷√
+  22           u8 Reverse_Seek=0;
+  23           PID_Dir PID;
+  24          
+  25          
+  26          
+  27          
+  28          //
+  29          // Digital Lowpass Filter Implementation
+  30          //
+  31          // See: A Simple Software Lowpass Filter Suits Embedded-system Applications
+  32          // http://www.edn.com/article/CA6335310.html
+  33          //
+  34          // k    Bandwidth (Normalized to 1Hz)   Rise Time (samples)
+  35          // 1    0.1197                          3
+  36          // 2    0.0466                          8
+  37          // 3    0.0217                          16
+  38          // 4    0.0104                          34
+  39          // 5    0.0051                          69
+  40          // 6    0.0026                          140
+  41          // 7    0.0012                          280
+  42          // 8    0.0007                          561
+  43          //
+  44          
+  45          #define FILTER_SHIFT 1
+  46          
+  47          static int32 filter_reg = 0;
+  48          
+  49          static int16 filter_update(int16 input)// ˝◊÷¬À≤®
+  50          {
+  51   1      #if 0
+                  // Update the filter with the current input.”√µ±«∞ ‰»Î∏¸–¬¬À≤®∆˜
+              #if FULL_ROTATION_ENABLED
+                  filter_reg += normalize_position_difference(input - (filter_reg >> FILTER_SHIFT));
+C51 COMPILER V9.52.0.0   PID                                                               10/11/2019 09:21:58 PAGE 2   
+
+              #else
+                  filter_reg = filter_reg - (filter_reg >> FILTER_SHIFT) + input;
+              #endif
+              
+                  // Scale output for unity gain.
+                  return (int16) (filter_reg >> FILTER_SHIFT);
+              #else
+  62   1          return input;
+  63   1      #endif
+  64   1      }
+  65          
+  66          void pid_init(void)
+  67          // Initialize the PID algorithm module.≥ı ºªØpidÀ„∑®ƒ£øÈ
+  68          {
+  69   1         previous_seek = -1;
+  70   1      }
+  71          
+  72          
+  73          void pid_registers_defaults(void)
+  74          {
+  75   1      
+  76   1          PID.deadband=DEFAULT_PID_DEADBAND;
+  77   1          PID.p_gain  =DEFAULT_PID_PGAIN;
+  78   1          PID.i_gain  =DEFAULT_PID_IGAIN;
+  79   1          PID.d_gain  =DEFAULT_PID_DGAIN;
+  80   1        
+  81   1          minimum_position=DEFAULT_MIN_SEEK;
+  82   1          maximum_position=DEFAULT_MAX_SEEK;
+  83   1          Reverse_Seek=0;//∑¥∑¥œÚ±Í÷æ
+  84   1        
+  85   1      }
+  86          
+  87          
+  88          int16 pid_position_to_pwm(int16 current_position, u8 tick)
+  89          // This is a modified pid algorithm by which the seek position and seek
+  90          // velocity are assumed to be a moving target.  The algorithm attempts to
+  91          // output a pwm value that will achieve a predicted position and velocity.
+  92          //’‚ «“ª÷÷∏ƒΩ¯µƒPIDÀ„∑®£¨Õ®π˝À¸¿¥≤È’“Œª÷√∫Õ—∞’“°£
+  93          //ÀŸ∂»±ªºŸ∂®Œ™‘À∂Øƒø±Í°£∏√À„∑® ‘Õº ‰≥ˆ“ª∏ˆPWM÷µ£¨“‘¥ÔµΩ‘§≤‚µƒŒª÷√∫ÕÀŸ∂»°£
+  94          {
+  95   1          // We declare these static to keep them off the stack.
+  96   1      
+  97   1          static int16 current_velocity;//œ÷‘⁄ÀŸ∂»
+  98   1          static int16 filtered_position;//¬À≤®∫ÛµƒŒª÷√
+  99   1      
+ 100   1          static u8    pwm_is_enabled;//PWM πƒ‹±Í÷æ
+ 101   1        
+ 102   1      // Get flag indicating if PWM is enabled or not. This saves fetching it each time
+ 103   1      // we want to know.
+ 104   1      //ªÒ»°÷∏ æ «∑Ò∆Ù”√¡ÀPWMµƒ±Í÷æ°£’‚Ω⁄ °√ø¥ŒÃ·»°À¸°£
+ 105   1      //Œ“√«œÎ÷™µ¿
+ 106   1      //    pwm_is_enabled=registers_read_byte(REG_FLAGS_LO)&(1<<FLAGS_LO_PWM_ENABLED);
+ 107   1      
+ 108   1          // Õ®π˝ ˝◊÷µÕÕ®¬À≤®∆˜∂‘µ±«∞Œª÷√Ω¯––¬À≤®°£
+ 109   1          filtered_position = filter_update(current_position);
+ 110   1      
+ 111   1          //  π”√π˝¬ÀŒª÷√»∑∂®ÀŸ∂»
+ 112   1      #if FULL_ROTATION_ENABLED
+                  current_velocity = normalize_position_difference(filtered_position - previous_position);
+              #else
+ 115   1          current_velocity = filtered_position - previous_position;//µ±«∞ÀŸ∂»
+ 116   1      #endif
+C51 COMPILER V9.52.0.0   PID                                                               10/11/2019 09:21:58 PAGE 3   
+
+ 117   1      
+ 118   1          // ∂¡»°ƒø±ÍŒª÷√∫ÕÀŸ∂»
+ 119   1      //    seek_position = (int16) registers_read_word(REG_SEEK_POSITION_HI, REG_SEEK_POSITION_LO);
+ 120   1      //    seek_velocity = (int16) registers_read_word(REG_SEEK_VELOCITY_HI, REG_SEEK_VELOCITY_LO);
+ 121   1          // ∂¡»°◊Ó–°∫Õ◊Ó¥ÛŒª÷√°£
+ 122   1      //    minimum_position = (int16) registers_read_word(REG_MIN_SEEK_HI, REG_MIN_SEEK_LO);
+ 123   1      //    maximum_position = (int16) registers_read_word(REG_MAX_SEEK_HI, REG_MAX_SEEK_LO);
+ 124   1      
+ 125   1      // Are we reversing the seek sense?Œ“√« «∑Òµﬂµπ¡À—∞«Û“‚“Â£ø
+ 126   1      // TODO: What is the point of this? Surely it is better to correct the wires to the motor than’‚ « ≤√¥“‚Àº
+             -£øµ±»ª£¨◊Ó∫√∞—µÁª˙µƒµÁœﬂ–£’˝∫√°£
+ 127   1      //       risk accidents?/∑Áœ’ ¬π £ø
+ 128   1          if (Reverse_Seek!= 0)
+ 129   1          {
+ 130   2              // Yes. Update the position and velocity using reverse sense.¿˚”√∑¥œÚ∏–æı∏¸–¬Œª÷√∫ÕÀŸ∂»
+ 131   2      //        registers_write_word(REG_POSITION_HI, REG_POSITION_LO, (u16) (MAX_POSITION - current_position));
+ 132   2      //        registers_write_word(REG_VELOCITY_HI, REG_VELOCITY_LO, (u16) -current_velocity);
+ 133   2              // Reverse sense the seek and other position values.∑¥œÚ—∞’“Œª÷√∫Õ∆‰À˚Œª÷√÷µ
+ 134   2                 seek_position = MAX_POSITION - seek_position;
+ 135   2              minimum_position = MAX_POSITION - minimum_position;
+ 136   2              maximum_position = MAX_POSITION - maximum_position;
+ 137   2            
+ 138   2          }
+ 139   1          else
+ 140   1          {
+ 141   2              // No. Update the position and velocity registers without change.Œﬁ±‰ªØµÿ∏¸–¬Œª÷√∫ÕÀŸ∂»ºƒ¥Ê∆˜
+ 142   2      //        registers_write_word(REG_POSITION_HI, REG_POSITION_LO, (u16) current_position);
+ 143   2      //        registers_write_word(REG_VELOCITY_HI, REG_VELOCITY_LO, (u16) current_velocity);
+ 144   2          }
+ 145   1      
+ 146   1          // ªÒ»°À¿«¯
+ 147   1      //    PID.deadband = (int16) registers_read_byte(REG_PID_DEADBAND);
+ 148   1      
+ 149   1      // Keep the seek position bound within the set minimum and maximum position and the hardware
+ 150   1      // defined limits.
+ 151   1      // NOTE: Even when full rotation is enabled, the limit of the set min and max
+ 152   1      //       positions are still applied: these must be set appropriately to allow
+ 153   1      //       full rotation to occur.
+ 154   1      //
+ 155   1      //       TODO: When full rotation is enabled, it may be that the user desires the
+ 156   1      //             range to be exclusive rather than inclusive.
+ 157   1      
+ 158   1          if (seek_position < minimum_position) seek_position = minimum_position;
+ 159   1          if (seek_position > maximum_position) seek_position = maximum_position;
+ 160   1          if (seek_position < MIN_POSITION)     seek_position = MIN_POSITION;
+ 161   1          if (seek_position > MAX_POSITION)     seek_position = MAX_POSITION;
+ 162   1      
+ 163   1      // Check for new seek target
+ 164   1          if(previous_seek != seek_position )    // PWM enable state has changed...PWM∆Ù”√◊¥Ã¨“—∏ƒ±‰
+ 165   1          { 
+ 166   2             if(previous_seek == -1)                       // Initialisation≥ı ºªØ
+ 167   2             {
+ 168   3                previous_position = current_position;
+ 169   3                PID.i_component = 0;
+ 170   3                seek_delta = current_position;
+ 171   3             }
+ 172   2            
+ 173   2             previous_seek = seek_position;  
+ 174   2              seek_delta=previous_seek;
+ 175   2      //     seek_delta = current_position;//???????
+ 176   2      //     seek_delta=seek_position;
+ 177   2             position_at_start_of_new_seek = current_position;//∏¸–¬ƒø±ÍŒª÷√ ±µƒ∆µ„Œª÷√
+C51 COMPILER V9.52.0.0   PID                                                               10/11/2019 09:21:58 PAGE 4   
+
+ 178   2             previous_pwm_is_enabled = pwm_is_enabled;
+ 179   2             
+ 180   2          }
+ 181   1      //Send_Word_To_UART0 (current_position);
+ 182   1      //
+ 183   1      // Update seek target
+ 184   1      //
+ 185   1          if(tick && seek_delta!=seek_position && seek_velocity>0) // Tick is our time constant
+ 186   1          {
+ 187   2             if(position_at_start_of_new_seek<seek_position)
+ 188   2             {
+ 189   3                   seek_delta+=seek_velocity;
+ 190   3                if(seek_delta>=seek_position)
+ 191   3                {
+ 192   4                   seek_delta=seek_position;
+ 193   4                }
+ 194   3             } else
+ 195   2             {
+ 196   3                if(position_at_start_of_new_seek>seek_position)
+ 197   3                {
+ 198   4                   seek_delta-=seek_velocity;
+ 199   4                   if(seek_delta<=seek_position)
+ 200   4                   {
+ 201   5                      seek_delta=seek_position;
+ 202   5                   }
+ 203   4                }
+ 204   3             }
+ 205   2          }
+ 206   1      
+ 207   1          if(seek_delta==seek_position)
+ 208   1          {
+ 209   2             current_position = filtered_position;
+ 210   2          }
+ 211   1      
+ 212   1      // Calculate PWM
+ 213   1      #if FULL_ROTATION_ENABLED
+                  p_component = normalize_position_difference(seek_delta - current_position);
+              #else
+ 216   1          // The proportional component to the PID is the position error.PIDµƒ±»¿˝∑÷¡ø «Œª÷√ŒÛ≤Ó
+ 217   1          PID.p_component = seek_delta - current_position;
+ 218   1      #endif
+ 219   1      
+ 220   1          // The integral component
+ 221   1          if(tick) // Tick is our time constant
+ 222   1          {
+ 223   2             PID.i_component += PID.p_component;
+ 224   2          
+ 225   2             if(PID.i_component<PID_I_MIN) // Somewhat arbitrary anti integral wind-up; we're experimenting”–µ„Œ
+             -‰∂œµƒ∑¥ª˝∑÷£ªŒ“√«’˝‘⁄ ‘—È
+ 226   2             {
+ 227   3                PID.i_component=PID_I_MIN;
+ 228   3             } else
+ 229   2             {
+ 230   3                if(PID.i_component>PID_I_MAX)
+ 231   3                {
+ 232   4                   PID.i_component=PID_I_MAX;
+ 233   4                }
+ 234   3             }
+ 235   2          }
+ 236   1      
+ 237   1          // The derivative component to the PID is the change in position.PIDµƒµº ˝∑÷¡ø «Œª÷√µƒ±‰ªØ
+ 238   1          PID.d_component = previous_position - current_position;
+C51 COMPILER V9.52.0.0   PID                                                               10/11/2019 09:21:58 PAGE 5   
+
+ 239   1          previous_position = current_position;
+ 240   1      
+ 241   1          // Get the proportional, derivative and integral gains.
+ 242   1      //    PID.p_gain = registers_read_word(REG_PID_PGAIN_HI, REG_PID_PGAIN_LO);
+ 243   1      //    PID.i_gain = registers_read_word(REG_PID_IGAIN_HI, REG_PID_IGAIN_LO);
+ 244   1      //    PID.d_gain = registers_read_word(REG_PID_DGAIN_HI, REG_PID_DGAIN_LO);
+ 245   1      
+ 246   1          // Start with zero PWM output.
+ 247   1          PID.pwm_output = 0;
+ 248   1      
+ 249   1          // Apply proportional component to the PWM output if outside the deadband.
+ 250   1          if ((PID.p_component > PID.deadband) || (PID.p_component < -PID.deadband))
+ 251   1          {
+ 252   2              // Apply the proportional component of the PWM output.
+ 253   2              PID.pwm_output += (int32) PID.p_component * (int32) PID.p_gain;
+ 254   2      
+ 255   2          // Apply the integral component of the PWM output.
+ 256   2              PID.pwm_output += (int32) PID.i_component * (int32) PID.i_gain;
+ 257   2      
+ 258   2          // Apply the derivative component of the PWM output.
+ 259   2              PID.pwm_output += (int32) PID.d_component * (int32) PID.d_gain;
+ 260   2          } else
+ 261   1          {
+ 262   2             PID.i_component = 0;
+ 263   2          }
+ 264   1      
+ 265   1          // Shift by 8 to account for the multiply by the 8:8 fixed point gain values.
+ 266   1          // NOTE: When OpenEncoder is enabled an extra 1 place of shift is applied
+ 267   1          //       to account for the increased precision (which is approximately a
+ 268   1          //       factor of 2) so that the magnitude of the gain values are similar
+ 269   1          //       across the two different platforms.
+ 270   1          //
+ 271   1          //       Factor of 2: pot measurements are typically approaching 180 degrees
+ 272   1          //       across the 0 to 1023 ADC range. OpenEncoder is 360 degrees across the
+ 273   1          //       0 to 4096 range.
+ 274   1          //
+ 275   1      //“∆8’º≥À8µ„‘ˆ“Ê÷µ°£
+ 276   1      //◊¢“‚£∫µ±OpenEncoder∆Ù”√∂ÓÕ‚µƒ1Œª“∆Œªµƒ”¶”√
+ 277   1      //øº¬«µΩæ´∂»µƒÃ·∏ﬂ£®¥Û‘º «
+ 278   1      //“Ú◊”2£© π‘ˆ“Ê÷µµƒ¥Û–°¿‡À∆°£
+ 279   1      //øÁ‘Ω¡Ω∏ˆ≤ªÕ¨µƒ∆ΩÃ®°£
+ 280   1      
+ 281   1      //2“ÚÀÿ£∫πﬁ≤‚¡øÕ®≥£Ω”Ω¸180∂»°£
+ 282   1      //øÁ‘Ω0÷¡1023 ADC∑∂Œß°£openencoder «360∂»‘⁄0÷¡4096µƒ∑∂Œßƒ⁄°£
+ 283   1      #if ENCODER_ENABLED
+                  PID.pwm_output >>= 9;
+              #else
+ 286   1          PID.pwm_output >>= 8;//pwm_output/256
+ 287   1      #endif
+ 288   1      
+ 289   1          // Check for output saturation.
+ 290   1          if (PID.pwm_output > MAX_OUTPUT)
+ 291   1          {
+ 292   2              // Can't go higher than the maximum output value.
+ 293   2              PID.pwm_output = MAX_OUTPUT;
+ 294   2          }
+ 295   1          else if (PID.pwm_output < MIN_OUTPUT)
+ 296   1          {
+ 297   2              // Can't go lower than the minimum output value.
+ 298   2              PID.pwm_output = MIN_OUTPUT;
+ 299   2          }
+ 300   1      
+C51 COMPILER V9.52.0.0   PID                                                               10/11/2019 09:21:58 PAGE 6   
+
+ 301   1          return (int16) PID.pwm_output;
+ 302   1          
+ 303   1          
+ 304   1      }
+ 305          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1344    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     45    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

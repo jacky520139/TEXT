@@ -1,0 +1,72 @@
+<html>
+<body>
+<pre>
+<h1>礦ision Build Log</h1>
+<h2>Tool Versions:</h2>
+IDE-Version: μVision V5.26.2.0
+Copyright (C) 2018 ARM Ltd and ARM Germany GmbH. All rights reserved.
+License Information: 1 Microsoft, Microsoft, LIC=8V0X7-EMT53-LYYV3-AJXEI-4ZUPY-QGWVL
+ 
+Tool Versions:
+Toolchain:       PK51 Prof. Developers Kit  Version: 9.52.0.0
+Toolchain Path:  C:\Keil_v5\C51\BIN
+C Compiler:      C51.exe V9.52.0.0
+Assembler:       A51.exe V8.02b
+Linker/Locator:  LX51.exe V4.66.1.0
+Library Manager: LIBX51.exe V4.29
+Hex Converter:   OHX51.exe V1.43.0.0
+CPU DLL:         S8051.DLL V3.91.0.0
+Dialog DLL:      DP51.DLL V2.62.0.1
+Target DLL:      Nuvoton_8051_Keil_uVision_Driver.dll V3.01
+Dialog DLL:      TP51.DLL V2.58
+ 
+<h2>Project:</h2>
+E:\卓伦\工作项目\WATCH\程序\灯板程序\LED_12T - 备份1016 - 7A21\LED_12T.uvproj
+Project File Date:  10/16/2019
+
+<h2>Output:</h2>
+Rebuild target 'Target 1'
+assembling STARTUP.A51...
+compiling System.c...
+compiling main.c...
+compiling adc.c...
+compiling eeprom.c...
+compiling Work.c...
+compiling UART.C...
+compiling SC7A21.c...
+compiling i2c_software.c...
+compiling SL_Watch_Pedo_Application.c...
+compiling iic.c...
+Code\iic.c(335): warning C173: missing return-expression
+Code\iic.c(325): warning C280: 'sl_spi_iic': unreferenced local variable
+Code\iic.c(325): warning C280: 'reg': unreferenced local variable
+Code\iic.c(325): warning C280: 'Data': unreferenced local variable
+Code\iic.c(335): warning C290: missing return value
+linking...
+LX51 LINKER/LOCATER V4.66.1.0 - SN: K1RMC-VGYQ1C
+COPYRIGHT ARM Germany GmbH 1995 - 2013
+@.\Output\LED_12T.lnp ".\Output\STARTUP.obj",
+".\Output\System.obj",
+".\Output\main.obj",
+".\Output\adc.obj",
+".\Output\eeprom.obj",
+".\Output\Work.obj",
+".\Output\UART.obj",
+".\Output\SC7A21.obj",
+".\Output\i2c_software.obj",
+".\Output\SL_Watch_Pedo_Application.obj",
+".\Output\iic.obj",
+".\LIB\SL_Watch_Pedo_Algorithm.lib" 
+TO ".\Output\LED_12T" 
+PRINT(".\LST\LED_12T.map") DISABLEWARNING (16) 
+*** ERROR L104: MULTIPLE PUBLIC DEFINITIONS
+    SYMBOL:  _delay
+    MODULE:  .\Output\iic.obj (IIC)
+   DEFINED:  .\Output\i2c_software.obj (I2C_SOFTWARE)
+*** ERROR L218: NOT AN OBJECT FILE
+    FILE: .\LIB\SL_Watch_Pedo_Algorithm.lib
+Target not created.
+Build Time Elapsed:  00:00:01
+</pre>
+</body>
+</html>

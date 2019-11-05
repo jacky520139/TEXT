@@ -1,0 +1,47 @@
+C51 COMPILER V9.52.0.0   SC7A21                                                            10/16/2019 15:31:47 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE SC7A21
+OBJECT MODULE PLACED IN .\Output\SC7A21.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE Code\SC7A21.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..\..
+                    -\Include;.\head;.\Common;.\LIB) DEFINE(FOSC_160000) DEBUG PRINT(.\LST\SC7A21.lst) TABS(2) OBJECT(.\Output\SC7A21.obj)
+
+line level    source
+
+   1          #include "ALL_Includes.h"
+   2          //code u8 Register_[][]=
+   3          //{
+   4          
+   5          
+   6          
+   7          
+   8          
+   9          //}
+  10          
+  11          
+  12          //void INIT_SC7A21(void)
+  13          //{
+  14          //i2cs_tx_data(uint8_t devAddr7,STEP_CTRL,uint8_t*buf,uint8_t size);
+  15          
+  16          
+  17          
+  18          //}
+  19          //清除计步值寄存器数据
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   ----    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

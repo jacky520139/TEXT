@@ -1,0 +1,149 @@
+C51 COMPILER V9.52.0.0   ADC                                                               10/21/2019 17:55:36 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE ADC
+OBJECT MODULE PLACED IN ..\Output\adc.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Code\adc.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..\Co
+                    -mmon;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\LST\adc.lst) TABS(2) OBJECT(..\Output\adc.obj)
+
+line level    source
+
+   1          
+   2          
+   3          #include "ALL_Includes.h"
+   4          
+   5          
+   6          
+   7          
+   8           u8 adc_position_ready;
+   9           u16 adc_position_value;
+  10          // u8 adc_voltage_needed;
+  11          u16 adc_seek_position_value;
+  12          
+  13          
+  14          
+  15          void adc_init(void)
+  16          {
+  17   1      
+  18   1      //    adc_position_ready = 0;
+  19   1      //    adc_position_value = 0;
+  20   1          ADCCON1|=0x01;//打开ADC电源
+  21   1          AINDIDS=Bin(10010000);
+  22   1          ADCF=0; 
+  23   1         // EADC=1;//使能ADC中断
+  24   1      }
+  25          
+  26          u16 ADC_Read(u8 CHS)
+  27          { u16 new_value;
+  28   1        set_BODEN;//打开欠压检测功能，才可以使用1.2V基准电压
+  29   1        ADCCON0=(CHS&0x0f);
+  30   1        ADCF=0;
+  31   1        ADCS=1;
+  32   1        while(ADCS==1);
+  33   1        ADCF=0;
+  34   1        new_value =(ADCRH<<4)+(ADCRL&0x0f);
+  35   1        clr_BODEN;//关闭欠压检测功能
+  36   1        return new_value;                 
+  37   1      }
+  38          /***************************************************************
+  39          * 函数功能：ADC开始采样（10ms调用一次）
+  40          * 输入参数：
+  41          * 输出参数：
+  42          ***************************************************************/
+  43          void ADC_GO(void)
+  44          {
+  45   1        ADCCON0=(ADC_CHANNEL_CURRENT&0x0f);
+  46   1        ADCF=0;
+  47   1        ADCS=1;
+  48   1      }
+  49          //bit full=0;
+  50          
+  51          //void INIT_Filter(_Filt_Dev* Filt_Dev,u8 Depth)
+  52          //{   u8 i = 0;
+  53          
+  54          //    Filt_Dev->Count = 0;
+C51 COMPILER V9.52.0.0   ADC                                                               10/21/2019 17:55:36 PAGE 2   
+
+  55          //    Filt_Dev->Depth = Depth;
+  56          //    for(i = 0; i < Depth; i++)
+  57          //    {
+  58          //        Filt_Dev->Buff[i] = 0;
+  59          //    }
+  60          //    Filt_Dev->Date_Sun=0;
+  61          
+  62          //}
+  63          
+  64          /***************************************************************
+  65          * 函数功能：滤波器
+  66          * 输入参数：
+  67          * 输出参数：
+  68          ***************************************************************/
+  69          
+  70          //u16 Filter(_Filt_Dev* Filt_Dev, u16 date)
+  71          //{       u16 Aver_date = 0;
+  72          //        Filt_Dev->Date_Sun -= Filt_Dev->Buff[Filt_Dev->Count];
+  73          //        Filt_Dev->Buff[Filt_Dev->Count]=date;
+  74          //        Filt_Dev->Date_Sun += date;
+  75          //        Filt_Dev->Count++;
+  76          //        if(Filt_Dev->Count == Filt_Dev->Depth)
+  77          //        {   Filt_Dev->Count = 0;
+  78          //            full=1;
+  79          //        }
+  80          //        if(full)
+  81          //        Aver_date = Filt_Dev->Date_Sun / Filt_Dev->Depth;
+  82          //        else
+  83          //        {Aver_date=date;}
+  84          //       return   Aver_date;
+  85          //}
+  86          /***************************************************************
+  87          * 函数功能：ADC中断服务函数
+  88          * 输入参数：
+  89          * 输出参数：
+  90          ***************************************************************/
+  91          
+  92          void ADC_ISR (void) interrupt 11  
+  93          {
+  94   1          u16 new_value =(ADCRH<<4)+(ADCRL&0x0f);
+  95   1                        
+  96   1          ADCF=0;
+  97   1      //    switch (ADCCON0 & 0x0f)
+  98   1      //    {
+  99   1      
+ 100   1      //        case ADC_CHANNEL_POSITION:
+ 101   1      
+ 102   1      //            break;
+ 103   1      
+ 104   1      
+ 105   1      
+ 106   1      //        case ADC_CHANNEL_CURRENT:
+ 107   1      
+ 108   1      //             break;
+ 109   1      //        case ADC_CHANNEL_VOLTAGE:
+ 110   1      //      
+ 111   1      //             ADCCON0=(ADC_CHANNEL_POSITION&0x0f);
+ 112   1      //             ADCS=1;        
+ 113   1      //             break;   
+ 114   1      //      
+ 115   1      //    }
+ 116   1           
+C51 COMPILER V9.52.0.0   ADC                                                               10/21/2019 17:55:36 PAGE 3   
+
+ 117   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    160    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      5       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

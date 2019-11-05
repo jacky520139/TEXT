@@ -1,0 +1,11 @@
+LX51 LINKER/LOCATER V4.66.1.0                                                           10/16/2019  17:44:25  PAGE 1
+
+
+LX51 LINKER/LOCATER V4.66.1.0, INVOKED BY:
+C:\KEIL_V5\C51\BIN\LX51.EXE ..\STARTUP.obj, ..\System.obj, ..\adc.obj, ..\eeprom.obj, ..\i2c_software.obj, ..\iic.obj, .
+>> .\main.obj, ..\SC7A21.obj, ..\SL_Watch_Pedo_Application.obj, ..\UART.obj, ..\Work.obj, ..\lib\SL_Watch_Pedo_Algorithm
+>> .lib TO ..\LED_12T PRINT (..\LED_12T.map) DISABLEWARNING (16)
+
+
+*** ERROR L218: NOT AN OBJECT FILE
+    FILE: ..\lib\SL_Watch_Pedo_Algorithm.lib

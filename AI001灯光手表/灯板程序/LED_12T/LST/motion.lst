@@ -1,0 +1,373 @@
+C51 COMPILER V9.52.0.0   MOTION                                                            10/11/2019 09:21:58 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE MOTION
+OBJECT MODULE PLACED IN .\Output\motion.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE Code\motion.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..\..
+                    -\Include;.\head;.\Common) DEFINE(FOSC_160000) DEBUG PRINT(.\LST\motion.lst) TABS(2) OBJECT(.\Output\motion.obj)
+
+line level    source
+
+   1          #include "ALL_Includes.h"
+   2          #if CURVE_MOTION_ENABLED
+   3          
+   4          // 输出变量
+   5          u8 motion_head;//头
+   6          u8 motion_tail;//尾
+   7          u32 motion_counter;//运动计数器
+   8          u32 motion_duration;//运动时区间;
+   9          
+  10          motion_key keys[MOTION_BUFFER_SIZE];
+  11           
+  12          static float int_to_float(int16 a)
+  13          // 16bit unsigned integer to float.
+  14          {
+  15   1          return (float) a;
+  16   1      }
+  17          
+  18          
+  19          static int16 float_to_int(float a)
+  20          // Float to 6:10 signed fixed.
+  21          {
+  22   1          return (int16) (a + 0.5);
+  23   1      //  return (int16) (a );
+  24   1      }
+  25          
+  26          
+  27          static float fixed_to_float(int16 a)
+  28          // 6:10 signed fixed point to float.
+  29          {
+  30   1          return ((float) a) / 1024.0;
+  31   1      }
+  32          
+  33          
+  34          #if 0
+              static int16 float_to_fixed(float a)
+              // Float to 6:10 signed fixed.
+              {
+                  return (int16) (a * 1024.0);
+              }
+              #endif
+  41          
+  42          
+  43          void motion_init(void)
+  44          // Initialize the curve buffer.
+  45          {
+  46   1          // Initialize the counter.
+  47   1          motion_counter = 0;
+  48   1      
+  49   1          // Initialize the duration.
+  50   1          motion_duration = 0;
+  51   1      
+  52   1          // Initialize the queue.
+  53   1          motion_head = 0;
+  54   1          motion_tail = 0;
+C51 COMPILER V9.52.0.0   MOTION                                                            10/11/2019 09:21:58 PAGE 2   
+
+  55   1      
+  56   1          // Initialize the keypoint.
+  57   1          keys[0].delta = 0;
+  58   1          keys[0].position = 512.0;
+  59   1          keys[0].in_velocity = 0.0;
+  60   1          keys[0].out_velocity = 0.0;
+  61   1      
+  62   1        
+  63   1          keys[1].delta = 0;
+  64   1          keys[1].position = 512.0;
+  65   1          keys[1].in_velocity = 0.0;
+  66   1          keys[1].out_velocity = 0.0;
+  67   1          
+  68   1            
+  69   1          keys[2].delta = 0;
+  70   1          keys[2].position = 512.0;
+  71   1          keys[2].in_velocity = 0.0;
+  72   1          keys[2].out_velocity = 0.0;
+  73   1                
+  74   1          keys[3].delta = 0;
+  75   1          keys[3].position = 512.0;
+  76   1          keys[3].in_velocity = 0.0;
+  77   1          keys[3].out_velocity = 0.0;
+  78   1                    
+  79   1          keys[4].delta = 0;
+  80   1          keys[4].position = 512.0;
+  81   1          keys[4].in_velocity = 0.0;
+  82   1          keys[4].out_velocity = 0.0;
+  83   1                    
+  84   1          keys[5].delta = 0;
+  85   1          keys[5].position = 512.0;
+  86   1          keys[5].in_velocity = 0.0;
+  87   1          keys[5].out_velocity = 0.0; 
+  88   1                    
+  89   1          keys[6].delta = 0;
+  90   1          keys[6].position = 512.0;
+  91   1          keys[6].in_velocity = 0.0;
+  92   1          keys[6].out_velocity = 0.0;   
+  93   1                    
+  94   1          keys[7].delta = 0;
+  95   1          keys[7].position = 512.0;
+  96   1          keys[7].in_velocity = 0.0;
+  97   1          keys[7].out_velocity = 0.0;     
+  98   1          // Initialize an empty hermite curve at the center servo position.
+  99   1        //在中间伺服位置初始化一个空的埃尔米特曲线。
+ 100   1          curve_init(0, 0, 512.0, 512.0, 0.0, 0.0);
+ 101   1          // 重置寄存器。
+ 102   1          motion_registers_reset();
+ 103   1      }
+ 104          
+ 105          
+ 106          void motion_reset(int16 position)
+ 107          // Reset the motion buffer to the specified position.  The enabled state is preserved.将运动缓冲区重置为指
+             -定位置。启用状态保存。
+ 108          {
+ 109   1          // Reset the counter.重置计数器。
+ 110   1          motion_counter = 0;
+ 111   1      
+ 112   1          // Reset the duration.
+ 113   1          motion_duration = 0;
+ 114   1      
+ 115   1          // Reset the queue.
+C51 COMPILER V9.52.0.0   MOTION                                                            10/11/2019 09:21:58 PAGE 3   
+
+ 116   1          motion_head = 0;
+ 117   1          motion_tail = 0;
+ 118   1      
+ 119   1          // Reset the keypoint.
+ 120   1          keys[0].delta = 0;
+ 121   1          keys[0].position = int_to_float(position);
+ 122   1          keys[0].in_velocity = 0.0;
+ 123   1          keys[0].out_velocity = 0.0;
+ 124   1      
+ 125   1          // Initialize an empty hermite curve.  This is a degenerate case for the hermite
+ 126   1          // curve that will always return the position of the curve without velocity.
+ 127   1      //  初始化一个空的埃尔米特曲线。这是厄米特的退化情形。
+ 128   1      //  曲线，总是返回曲线的位置，没有速度
+ 129   1          curve_init(0, 0, keys[0].position, keys[0].position, 0.0, 0.0);
+ 130   1      
+ 131   1          //Reset the registers.
+ 132   1          motion_registers_reset();
+ 133   1      }
+ 134          
+ 135          
+ 136          void motion_registers_reset(void)
+ 137          // Reset the motion registers to zero values.
+ 138          {
+ 139   1          // Set the default position, velocity and delta data.设置默认位置、速度和delta数据
+ 140   1      //    registers_write_word(REG_CURVE_POSITION_HI, REG_CURVE_POSITION_LO, 0);
+ 141   1      //    registers_write_word(REG_CURVE_IN_VELOCITY_HI, REG_CURVE_IN_VELOCITY_LO, 0);
+ 142   1      //    registers_write_word(REG_CURVE_OUT_VELOCITY_HI, REG_CURVE_OUT_VELOCITY_LO, 0);
+ 143   1          Curve_Position=0;
+ 144   1          Curve_In_Velocity=0;
+ 145   1          Curve_Out_Velocity=0;
+ 146   1          Curve_Delta=0;
+ 147   1          // 更新缓冲区状态。
+ 148   1      //    registers_write_byte(REG_CURVE_RESERVED, 0);
+ 149   1          Curve_Reserved=0;
+ 150   1      //    registers_write_byte(REG_CURVE_BUFFER, motion_buffer_left());
+ 151   1      }
+ 152          
+ 153          u8 next;
+ 154          u8 motion_append(void)
+ 155          // Append a new curve keypoint from data stored in the curve registers.  The keypoint
+ 156          // is offset from the previous curve by the specified delta.  An error is returned if
+ 157          // there is no more room to store the new keypoint in the buffer or if the delta is
+ 158          // less than one (a zero delta is not allowed).
+ 159          //从存储在寄存器数据曲线添加一个新的曲线关键点。关键点由指定的增量从前面的曲线偏移。如果返回错误，则
+ 160          //没有更多的空间来存储新的关键点在缓冲或者三角洲小于1（不允许零增量）
+ 161          {
+ 162   1          int16 position;
+ 163   1          int16 in_velocity;
+ 164   1          int16 out_velocity;
+ 165   1      //    u8 next;
+ 166   1          u16 delta;
+ 167   1      
+ 168   1          // Get the next index in the buffer.
+ 169   1          next = (motion_head + 1) & MOTION_BUFFER_MASK;//在缓冲区中获取下一个索引
+ 170   1      
+ 171   1          // Return error if we have looped the head to the tail and the buffer is filled.
+ 172   1          if (next == motion_tail) return 0;//如果我们的头循环到尾部，缓冲区被填满，则返回错误。
+ 173   1      
+ 174   1          // Get the position, velocity and time delta values from the registers.
+ 175   1      //    position = (int16) registers_read_word(REG_CURVE_POSITION_HI, REG_CURVE_POSITION_LO);
+ 176   1          
+ 177   1      //    in_velocity = (int16) registers_read_word(REG_CURVE_IN_VELOCITY_HI, REG_CURVE_IN_VELOCITY_LO);
+C51 COMPILER V9.52.0.0   MOTION                                                            10/11/2019 09:21:58 PAGE 4   
+
+ 178   1      //    out_velocity = (int16) registers_read_word(REG_CURVE_OUT_VELOCITY_HI, REG_CURVE_OUT_VELOCITY_LO);
+ 179   1      //    delta = (u16) registers_read_word(REG_CURVE_DELTA_HI, REG_CURVE_DELTA_LO);
+ 180   1          position =Curve_Position;
+ 181   1          in_velocity = (int16)Curve_In_Velocity;
+ 182   1          out_velocity = (int16)Curve_Out_Velocity;
+ 183   1          delta = Curve_Delta;
+ 184   1          // Keypoint delta must be greater than zero.
+ 185   1          if (delta < 1) return 0;
+ 186   1      
+ 187   1          // Fill in the next keypoint.
+ 188   1          keys[next].delta = delta;
+ 189   1          keys[next].position = int_to_float(position);
+ 190   1          keys[next].in_velocity = fixed_to_float(in_velocity);
+ 191   1          keys[next].out_velocity = fixed_to_float(out_velocity);
+ 192   1      
+ 193   1          // Is this keypoint being added to an empty buffer?
+ 194   1      //    关键点被添加到一个空缓冲区？
+ 195   1          if (motion_tail == motion_head)
+ 196   1          {
+ 197   2              // Initialize a new hermite curve that gets us from the current position to the new position.
+ 198   2              // We use a velocity of zero at each end to smoothly transition from one to the other.
+ 199   2      //       初始化一个新的厄米曲线，使我们从当前位置到新位置。
+ 200   2      //       我们用每一端的零速度平稳地从一个过渡到另一个
+ 201   2              curve_init(0, delta, curve_get_p1(), keys[next].position, 0.0, 0.0);
+ 202   2          }
+ 203   1      
+ 204   1          // Increase the duration of the buffer.增加缓冲区的持续时间
+ 205   1          motion_duration += delta;
+ 206   1      
+ 207   1          // Set the new head index.设置新的头索引。
+ 208   1          motion_head = next;
+ 209   1      
+ 210   1          // Reset the motion registers and update the buffer status.
+ 211   1         //   重置运动寄存器并更新缓冲区状态。
+ 212   1          motion_registers_reset();
+ 213   1      
+ 214   1          return 1;
+ 215   1      }
+ 216          
+ 217              float fposition;//位置
+ 218              float fvelocity;//速度
+ 219          void motion_next(u16 delta)
+ 220          // Increment the buffer counter by the indicated delta and return the position
+ 221          // and velocity from the buffered curves.  If the delta is zero the current
+ 222          // position and velocity is returned.
+ 223          //通过指定的增量增量缓冲计数器并返回位置。
+ 224          //和缓冲曲线的速度。如果三角洲是零电流
+ 225          //返回位置和速度。
+ 226          {
+ 227   1      
+ 228   1      
+ 229   1          // 确定在寄存器中是否禁用曲线运动
+ 230   1      //    if (!(registers_read_byte(REG_FLAGS_LO) & (1<<FLAGS_LO_MOTION_ENABLED))) return;
+ 231   1          // 我们处理的是空曲线吗？
+ 232   1          if (motion_tail == motion_head)
+ 233   1          {
+ 234   2              // Yes. 保持计数器和持续时间为0。
+ 235   2              motion_counter = 0;
+ 236   2              motion_duration = 0;
+ 237   2          }
+ 238   1          else
+ 239   1          {
+C51 COMPILER V9.52.0.0   MOTION                                                            10/11/2019 09:21:58 PAGE 5   
+
+ 240   2              // Increment the counter.增加计数器
+ 241   2              motion_counter += delta;
+ 242   2      
+ 243   2              // Have we exceeded the duration of the currently buffered curve?
+ 244   2              while (motion_counter > curve_get_duration())
+ 245   2              {
+ 246   3                  // Reduce the buffer counter by the currently buffered curve duration.
+ 247   3      //          通过当前缓冲的曲线持续时间来减少缓冲计数器
+ 248   3                  motion_counter -= curve_get_duration();
+ 249   3      
+ 250   3                  // Reduce the buffer duration by the currently buffered curve duration.
+ 251   3      //             通过当前缓冲的曲线持续时间来减少缓冲区持续时间
+ 252   3                  motion_duration -= curve_get_duration();
+ 253   3      
+ 254   3                  // Increment the tail to process the next buffered curve.
+ 255   3      //          增加尾部来处理下一个缓冲曲线。motion_tail++;
+ 256   3                  motion_tail = (motion_tail + 1) & MOTION_BUFFER_MASK;
+ 257   3      
+ 258   3                  // Has the tail caught up with the head?
+ 259   3                  if (motion_tail == motion_head)
+ 260   3                  {
+ 261   4                      // Initialize an empty hermite curve with a zero duration.  This is a degenerate case for
+ 262   4                      // the hermite cuve that will always return the position of the curve without velocity.
+ 263   4      //              初始化一个零时间的空埃尔米特曲线。这是Hermite曲线总是曲线的位置没有速度返回一个退化的情况。
+ 264   4                      curve_init(0, 0, keys[motion_head].position, keys[motion_head].position, 0.0, 0.0);
+ 265   4                      // Reset the buffer counter and duration to zero.
+ 266   4                      motion_counter = 0;
+ 267   4                      motion_duration = 0;
+ 268   4                  }
+ 269   3                  else
+ 270   3                  {
+ 271   4                      u8 curr_point;
+ 272   4                      u8 next_point;
+ 273   4                    //获取曲线的当前点和下一点
+ 274   4                      curr_point = motion_tail;
+ 275   4                      next_point = (curr_point + 1) & MOTION_BUFFER_MASK;
+ 276   4      
+ 277   4                      // 从当前和下一个点初始化厄米曲线。
+ 278   4                      curve_init(0,                             keys[next_point].delta,
+ 279   4                                 keys[curr_point].position,     keys[next_point].position,
+ 280   4                                 keys[curr_point].out_velocity, keys[next_point].in_velocity);
+ 281   4                  }
+ 282   3      
+ 283   3                  // Update the space available in the buffer.
+ 284   3      //            registers_write_byte(REG_CURVE_BUFFER, motion_buffer_left());
+ 285   3              }
+ 286   2              
+ 287   2          }
+ 288   1      
+ 289   1      
+ 290   1          //从Hermite曲线得到位置和速度
+ 291   1          curve_solve(motion_counter, &fposition, &fvelocity);
+ 292   1      
+ 293   1          // The velocity is in position units a millisecond, but we really need the
+ 294   1          // velocity to be measured in position units every 10 milliseconds to match
+ 295   1          // the sample period of the ADC.
+ 296   1          fvelocity *=10.0;
+ 297   1         if(fvelocity<0)
+ 298   1         { fvelocity=-fvelocity;}
+ 299   1          // Update the seek position register.
+ 300   1      //    registers_write_word(REG_SEEK_POSITION_HI, REG_SEEK_POSITION_LO, );
+ 301   1      
+C51 COMPILER V9.52.0.0   MOTION                                                            10/11/2019 09:21:58 PAGE 6   
+
+ 302   1      //    // Update the seek velocity register.
+ 303   1      //    registers_write_word(REG_SEEK_VELOCITY_HI, REG_SEEK_VELOCITY_LO, float_to_int(fvelocity));
+ 304   1          
+ 305   1          seek_position=float_to_int(fposition);//目标位置
+ 306   1          seek_velocity=float_to_int(fvelocity);//寻求速度
+ 307   1         
+ 308   1      }
+ 309          
+ 310          
+ 311          u8 motion_buffer_left(void)
+ 312          // The motion buffer can contain up to MOTION_BUFFER_SIZE keypoints.  The function
+ 313          // returns how many keypoints remain free in the buffer for use.
+ 314          //运动的缓冲区可以包含多达motion_buffer_size要点。函数返回多少要点保持自由使用的缓冲区
+ 315          {
+ 316   1          u8 space_left;
+ 317   1      
+ 318   1          // Determine the points left to store curve data.
+ 319   1         // 确定保存曲线数据的点
+ 320   1          if (motion_head < motion_tail)
+ 321   1          {
+ 322   2              space_left = (MOTION_BUFFER_SIZE - 1) - (MOTION_BUFFER_SIZE + motion_head - motion_tail);
+ 323   2          }
+ 324   1          else
+ 325   1          {
+ 326   2              space_left = (MOTION_BUFFER_SIZE - 1) - (motion_head - motion_tail);
+ 327   2          }
+ 328   1      
+ 329   1          return space_left;
+ 330   1      }
+ 331          
+ 332          
+ 333          #endif // CURVE_MOTION_ENABLED
+ 334          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1839    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    131      14
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

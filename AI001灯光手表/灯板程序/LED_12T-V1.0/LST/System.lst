@@ -1,0 +1,355 @@
+C51 COMPILER V9.52.0.0   SYSTEM                                                            10/19/2019 14:09:49 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE SYSTEM
+OBJECT MODULE PLACED IN ..\Output\System.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Common\System.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(
+                    -..\Common;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\LST\System.lst) TABS(2) OBJECT(..\Output\System.obj)
+
+line level    source
+
+   1          #include "ALL_Includes.h"
+   2          bit BIT_TMP;
+   3          u16  DelaymS=0;
+   4          u32  Timer_1s=0;
+   5          Timer_Struct gTimer= {0,0,0,0};
+   6          u16  System_Timer=0;
+   7          /***************************************************************
+   8          * 函数功能：时间计数函数
+   9          * 输入参数：
+  10          * 输出参数：
+  11          ***************************************************************/
+  12          /***************************************************************
+  13          * 函数功能：时间计数函数
+  14          * 输入参数：
+  15          * 输出参数：
+  16          ***************************************************************/
+  17          void SysTick_Handler2(void)
+  18          {
+  19   1          ++gTimer.Tick20Msec;
+  20   1          if((gTimer.Tick20Msec%5)==0)
+  21   1          {
+  22   2              bTemp100Msec=TIMER_SET;
+  23   2          }
+  24   1          if((gTimer.Tick20Msec%25)==0)
+  25   1          {
+  26   2              bTemp500Msec=TIMER_SET;
+  27   2          }
+  28   1          if(gTimer.Tick20Msec==50)
+  29   1          {   gTimer.Tick20Msec=0;
+  30   2              bTemp1Sec=TIMER_SET;
+  31   2          }
+  32   1      }
+  33          void SysTick_Handler(void)
+  34          {
+  35   1          bTemp1Msec=TIMER_SET;
+  36   1          ++gTimer.Tick1Msec;
+  37   1          if((gTimer.Tick1Msec%2)==0)
+  38   1          {
+  39   2              bTemp2Msec=TIMER_SET;
+  40   2          }
+  41   1          if((gTimer.Tick1Msec%5)==0)
+  42   1          {
+  43   2              bTemp5Msec=TIMER_SET;
+  44   2          }
+  45   1          if((gTimer.Tick1Msec%10)==0)
+  46   1          {
+  47   2              bTemp10Msec=TIMER_SET;
+  48   2          }
+  49   1          if(gTimer.Tick1Msec==20)
+  50   1          {
+  51   2              gTimer.Tick1Msec=0;
+  52   2              bTemp20Msec=TIMER_SET;
+  53   2              SysTick_Handler2();
+  54   2          }
+C51 COMPILER V9.52.0.0   SYSTEM                                                            10/19/2019 14:09:49 PAGE 2   
+
+  55   1          if(DelaymS>0)
+  56   1          {
+  57   2              DelaymS--;
+  58   2          }
+  59   1      
+  60   1      }
+  61          
+  62          void SysTimer_Process(void)
+  63          {
+  64   1      //    EA=0;
+  65   1          gTimer.Timer_Status.byte=gTimer.SysTick_Status.byte;
+  66   1      
+  67   1          if(gTimer.SysTick_Status.byte)
+  68   1          {
+  69   2              gTimer.SysTick_Status.byte=0;
+  70   2      
+  71   2          }
+  72   1      
+  73   1      
+  74   1      //  gTimer.Timer_Status.byte=gTimer.SysTick_Status.byte;
+  75   1      //  gTimer.SysTick_Status.byte=0;
+  76   1      
+  77   1      //    Clear_SysTick_Status
+  78   1      //    EA=1;
+  79   1      }
+  80          /***************************************************************
+  81          * 函数功能：定时器0初始化
+  82          * 输入参数：
+  83          * 输出参数：
+  84          ***************************************************************/
+  85          void Timer0Init(void)
+  86          {
+  87   1          TMOD&=0xF0;
+  88   1          TMOD|=0x01;//模式1:16位计时器
+  89   1          CKCON&=~0X08;//1/12系统时钟
+  90   1          TL0 =Timer0_Reload;
+  91   1          TH0 =Timer0_Reload>>8;      //中断时间为100us
+  92   1          TR0=1;
+  93   1          ET0= 1;
+  94   1          EA = 1;
+  95   1      }
+  96          /***************************************************************
+  97          * 函数功能：定时器1初始化
+  98          * 输入参数：
+  99          * 输出参数：
+ 100          ***************************************************************/
+ 101          void Timer1Init(void)
+ 102          {
+ 103   1          TMOD&=0x0F;
+ 104   1          TMOD|=0x10;//模式1:16位计时器
+ 105   1          CKCON&=~0X08;//1/12系统时钟
+ 106   1      //    TL1 =Timer1_Reload(PWM_Cycle);
+ 107   1      //    TH1 =Timer1_Reload(PWM_Cycle)>>8;     //中断时间为100us
+ 108   1          TR1=1;
+ 109   1          ET1= 1;
+ 110   1          EA = 1;
+ 111   1      }
+ 112          /***************************************************************
+ 113          * 函数功能：定时器0中断服务函数
+ 114          * 输入参数：
+ 115          * 输出参数：
+ 116          ***************************************************************/
+C51 COMPILER V9.52.0.0   SYSTEM                                                            10/19/2019 14:09:49 PAGE 3   
+
+ 117          void Timer0_ISR (void) interrupt 1  //interrupt address is 0x000B
+ 118          {
+ 119   1          TL0 = Timer0_Reload;
+ 120   1          TH0 = Timer0_Reload>>8;
+ 121   1          SysTick_Handler();
+ 122   1          System_Timer++;
+ 123   1          LED_Sing=~LED_Sing;
+ 124   1      }
+ 125          void EXT1_ISR (void) interrupt 2  //外部中断服务函数
+ 126          {
+ 127   1      //  clr_IE1;//清除外部中断标志
+ 128   1      //  Receive_Packet();
+ 129   1      
+ 130   1      
+ 131   1      }
+ 132          /***************************************************************
+ 133          * 函数功能：定时器1中断服务函数
+ 134          * 输入参数：
+ 135          * 输出参数：
+ 136          ***************************************************************/
+ 137          
+ 138          void Timer1_ISR (void) interrupt 3  //interrupt address is 0x001B
+ 139          {
+ 140   1          u16 T1_Reload=0;
+ 141   1      
+ 142   1          TL1 =T1_Reload;
+ 143   1          TH1 =T1_Reload>>8;      //中断时间为10ms
+ 144   1      
+ 145   1      }
+ 146          void Timer2_ISR (void) interrupt 5
+ 147          {
+ 148   1          TF2=0;
+ 149   1      }
+ 150          u16 ADC_VAL;
+ 151          u16 Light_Val;
+ 152          void EXT_IO_ISR (void) interrupt 7
+ 153          {
+ 154   1      switch(PIF)
+ 155   1      {
+ 156   2        case   0:
+ 157   2          break;
+ 158   2        case   2:
+ 159   2               Lignt_VDD=1;
+ 160   2               adc_init();
+ 161   2               Light_Val=ADC_Read(4);//读取光强度
+ 162   2               ADCCON1&=~0x01;//关闭ADC电源
+ 163   2               Lignt_VDD=0;
+ 164   2               LED_OPEN_Time=((u32)Default_LED_OPEN_Time*Light_Val)>>12;
+ 165   2               LED_OPEN_T=(0xff-(127-LED_OPEN_Time));
+ 166   2               LED_CLOSE_T=(0xff-LED_OPEN_Time);
+ 167   2               LED_Count=0;
+ 168   2               LED_Cycle=0;
+ 169   2               set_WKTR; //开启唤醒定时器 
+ 170   2          break;
+ 171   2      
+ 172   2      }
+ 173   1      PIF=0;
+ 174   1      }
+ 175          
+ 176          void WKT_ISR (void) interrupt 17
+ 177          {
+ 178   1        clr_WKTF;
+C51 COMPILER V9.52.0.0   SYSTEM                                                            10/19/2019 14:09:49 PAGE 4   
+
+ 179   1        //LED_Sing=0;
+ 180   1        clr_EPI;//关闭管脚中断
+ 181   1        Scan_LED();
+ 182   1        P16_NC=~P16_NC;
+ 183   1      }
+ 184          /*********************************************************************************************************
+             -***
+ 185          *    Timer2 Capture interrupt subroutine
+ 186          **********************************************************************************************************
+             -**/
+ 187          //void Capture_ISR (void) interrupt 12
+ 188          //{
+ 189          //        clr_CAPF0;                          // clear capture0 interrupt flag
+ 190          ////        P1 = C0L;                           // For capture mode CxL/CxH with data capture from I/O pin
+ 191          ////        P2 = C0H;
+ 192          ////        P12 = ~P12;                         //toggle GPIO1 to show int
+ 193          // if((CAPCON1&0x03)==0)
+ 194          // {Rudder=MAKEWORD(C0H,C0L);
+ 195          ////  filter_Rudder = filter_Rudder - (filter_Rudder >> 1) + Rudder;
+ 196          ////    Rudder=(int16) (filter_Rudder >> 1);
+ 197          ////   if(Rudder>filter_Rudder_MAX)
+ 198          ////   {filter_Rudder_MAX=Rudder;}
+ 199          ////   if(Rudder<filter_Rudder_MIN)
+ 200          ////   {filter_Rudder_MIN=Rudder;}
+ 201          ////   Sum_Rudder+=Rudder;
+ 202          ////   Rudder_Sampling_Count++;
+ 203          //   filter_Rudder=Rudder>>4;
+ 204          ////   if(Rudder_Sampling_Count>=4)
+ 205          ////   {
+ 206          ////     Sum_Rudder-=filter_Rudder_MAX;
+ 207          ////     Sum_Rudder-=filter_Rudder_MIN;
+ 208          ////     filter_Rudder=Sum_Rudder;
+ 209          ////     filter_Rudder=filter_Rudder>>4;
+ 210          ////     if(filter_Rudder>Rudder_MAX)
+ 211          ////     {filter_Rudder=Rudder_MAX;}
+ 212          ////     if(filter_Rudder<Rudder_MIN)
+ 213          ////     {filter_Rudder=Rudder_MIN;}
+ 214          ////     Rudder_Sampling_Count=0;
+ 215          ////     Sum_Rudder=0;
+ 216          ////     filter_Rudder_MAX=0;
+ 217          ////     filter_Rudder_MIN=0xffff;
+ 218          ////                              }
+ 219          //     CAPCON1|=0x01;}
+ 220          // else
+ 221          // {CAPCON1&=~0x03;}
+ 222          //}
+ 223          /***************************************************************
+ 224          * 函数功能：初始化IO端口
+ 225          * 输入参数：
+ 226          * 输出参数：
+ 227          ***************************************************************/
+ 228          void Init_IO(void)
+ 229          {
+ 230   1          P0M1=P0M1_D;
+ 231   1          P0M2=P0M2_D;
+ 232   1          P0=P0_D;
+ 233   1      
+ 234   1          P1M1=P1M1_D;
+ 235   1          P1M2=P1M2_D;
+ 236   1          P1=P1_D;
+ 237   1      
+ 238   1          P2=P2_D;
+C51 COMPILER V9.52.0.0   SYSTEM                                                            10/19/2019 14:09:49 PAGE 5   
+
+ 239   1      
+ 240   1          P3M1=P3M1_D;
+ 241   1          P3M2=P3M2_D;
+ 242   1          P3=P3_D;
+ 243   1      
+ 244   1      }
+ 245          void Set_System_Fre_10K(void)
+ 246          {
+ 247   1      set_LIRCST;//使能10K IRC
+ 248   1      set_OSC1;
+ 249   1      clr_OSC0;
+ 250   1      
+ 251   1      clr_BODEN;//关闭欠压检测功能
+ 252   1      clr_IAPEN;//失能IAP 
+ 253   1      clr_HIRCEN; //关闭16M IRC
+ 254   1      }
+ 255          void Set_System_Fre_16M(void)
+ 256          {
+ 257   1      set_HIRCST;//使能10K IRC
+ 258   1      clr_OSC1;
+ 259   1      clr_OSC0;
+ 260   1      clr_BODEN;//关闭欠压检测功能
+ 261   1      clr_IAPEN;//失能IAP
+ 262   1      clr_HIRCST; //关闭16M IRC 
+ 263   1        
+ 264   1      }
+ 265          /***************************************************************
+ 266          * 函数功能：自唤醒定时器
+ 267          * 输入参数：
+ 268          * 输出参数：
+ 269          ***************************************************************/
+ 270          void Init_WKT(void)
+ 271          {
+ 272   1      WKCON=Bin(00001011);
+ 273   1      RWK=254;
+ 274   1      set_EWKT;//中断使能
+ 275   1      
+ 276   1      EA = 1;
+ 277   1      }
+ 278          /***************************************************************
+ 279          * 函数功能：初始化外部中断
+ 280          * 输入参数：
+ 281          * 输出参数：
+ 282          ***************************************************************/
+ 283          void Init_EXT_IO_Interrupt(void)
+ 284          {
+ 285   1      PICON=Bin(00001000);
+ 286   1      PINEN=Bin(00000010);
+ 287   1      set_EPI;//使能管脚中断
+ 288   1      EA = 1;
+ 289   1      }
+ 290          
+ 291          /***************************************************************
+ 292          * 函数功能：系统初始化
+ 293          * 输入参数：
+ 294          * 输出参数：
+ 295          ***************************************************************/
+ 296          void InitSystem(void)
+ 297          {    
+ 298   1          u16 BG_1_22V;
+ 299   1          u16 VDD_VAL;
+ 300   1          Init_IO();
+C51 COMPILER V9.52.0.0   SYSTEM                                                            10/19/2019 14:09:49 PAGE 6   
+
+ 301   1          LED_0FF;
+ 302   1          INIT_SC7A21();
+ 303   1         // Timer0Init();
+ 304   1         // Timer1Init();
+ 305   1       // adc_init();
+ 306   1        //  InitialUART0_Timer3(115200);
+ 307   1          //ReadEeprom(); //读取参数
+ 308   1        Init_EXT_IO_Interrupt();
+ 309   1        Init_WKT();
+ 310   1        Set_System_Fre_10K();
+ 311   1      
+ 312   1        
+ 313   1      }
+*** WARNING C280 IN LINE 298 OF ..\Common\System.c: 'BG_1_22V': unreferenced local variable
+*** WARNING C280 IN LINE 299 OF ..\Common\System.c: 'VDD_VAL': unreferenced local variable
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    854    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     16       4
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  2 WARNING(S),  0 ERROR(S)

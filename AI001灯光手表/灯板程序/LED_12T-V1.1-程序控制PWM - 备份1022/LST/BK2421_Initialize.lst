@@ -1,0 +1,552 @@
+C51 COMPILER V9.52.0.0   BK2421_INITIALIZE                                                 10/11/2019 09:21:57 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE BK2421_INITIALIZE
+OBJECT MODULE PLACED IN .\Output\BK2421_Initialize.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE Code\BK2421_Initialize.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE I
+                    -NCDIR(..\..\Include;.\head;.\Common) DEFINE(FOSC_160000) DEBUG PRINT(.\LST\BK2421_Initialize.lst) TABS(2) OBJECT(.\Outpu
+                    -t\BK2421_Initialize.obj)
+
+line level    source
+
+   1          //#include "STM8S103F.h"
+   2          //#include "bk2421.h"
+   3          #include "ALL_Includes.h"
+   4          //#include  "EEPROM.h"
+   5          extern unsigned char Tx_Buffer[];
+   6          unsigned char op_status;
+   7          
+   8          unsigned char  Tx_Address[6];
+   9          unsigned char Work_Address[5];
+  10          unsigned char Work_Frequency[5];
+  11          
+  12          //Bank1 register initialization value
+  13          bit Bind_On=1;
+  14          bit Lost_Signal_f=0;//遥控信号丢失表示
+  15          code unsigned char RX_P0_Addr[5]= {0xD9,0x6A,0xCD,0x56,0x5B};//P0端地址对码接收端口
+  16          code unsigned char RX_P1_Addr[5]= {0x13,0x34,0xcc,0x78,0x9a};//P1端地址接收工作数据端口
+  17             u8 Lost_time=0;//遥控信号丢失时间
+  18          //code unsigned char Link_Address[]=
+  19          //{
+  20          //  //0x69,0x6b,0x26,0x5a,0x54,Factory_ID,
+  21          //  //0xd2,0xb3,0xb5,0x99,Factory_ID,
+  22          ////  0x7f,0xff,0xff,0xff,0xfe,
+  23          //  0xD9,0x6A,0xCD,0x56,0x5B
+  24          //};
+  25            u8 rx_buf[MAX_PACKET_LEN];//接收缓存
+  26          
+  27          //In the array Bank1_Reg0_13,all[] the register value is the byte reversed!
+  28          code unsigned long  Bank1_Reg0_13[]={       
+  29          0xE2014B40,   //写入顺序40,4b,01,e2
+  30          0x00004BC0,
+  31          0x028CFCD0,
+  32          0x213900f9,
+  33          0xDB8a96F9, 
+  34          0xB60F0624, 
+  35          0x00000000,
+  36          0x00000000,
+  37          0x00000000,
+  38          0x00000000,
+  39          0x00000000,
+  40          0x00000000,
+  41          0x00127300,
+  42          0x46B48000,   //0x36b48000
+  43          };
+  44          
+  45          code unsigned char  Bank1_Reg14[]=
+  46          {
+  47            0x41,0x20,0x08,0x04,0x81,0x20,0xCF,0xF7,0xFE,0xFF,0xFF
+  48          };
+  49          
+  50          //Bank0 register initialization value
+  51          code unsigned char  Bank0_Reg[][2]={
+  52          {0,0x0f},   //02//enable 2 byte CRC,Power Up,Rx mode
+  53          {1,0x03},   //Enable AUTO-ACK in data pipe[1:0] 
+C51 COMPILER V9.52.0.0   BK2421_INITIALIZE                                                 10/11/2019 09:21:57 PAGE 2   
+
+  54          {2,0x03},   //enable data pipe0,pipe1 
+  55          {3,0x03},   //5 byte Address Field width(高两字节用于识别 客户，低3字节用于识别设备）
+  56          {4,0x02},   //Auto retransmit delay 4000us，最大连续重发15次
+  57          {5,23},   //select channel 0x52=82d
+  58          {6,0x27},   //27//27:250K,07:1M //1Mbps data rate, output power=0dBm,High Gain
+  59          {7,0x70},   //77//clear Tx buffer and Rx buffer
+  60          {8,0x00},   //reset lost packet counter and retransmit packet counter 
+  61          {9,0x00},   //carrier detect
+  62          {12,0xc3},    //set data pipe address
+  63          {13,0xc4},
+  64          {14,0xc5},
+  65          {15,0xc6},
+  66          {17,0x20},    //set RX Payload Pipe0=7byte
+  67          {18,0x20},    //set RX Payload Pipe1=5byte
+  68          {19,0x20},
+  69          {20,0x20},
+  70          {21,0x20},
+  71          {22,0x20},
+  72          {23,0x00},
+  73          {28,0x3F},  //enable dynamic payload length  //0x3f,0x07：启动动态数据长度接收
+  74          {29,0x07}   //7
+  75          };
+  76          
+  77          
+  78          /**************************************************         
+  79          Function: DelayMs();                                  
+  80          
+  81          Description:                                                
+  82            delay ms,please implement this function according to your MCU.
+  83          /**************************************************/  
+  84          
+  85          void DelayMs(unsigned int ms)
+  86          {
+  87   1        unsigned char i, j;
+  88   1       for(;ms>0;ms--)
+  89   1        {
+  90   2        i = 18;
+  91   2        j = 235;
+  92   2        do
+  93   2        {
+  94   3          while (--j);
+  95   3        } while (--i);
+  96   2      } 
+  97   1      }
+  98          ///////////////////////////////////////////////////////////////////////////////
+  99          //                  SPI access                                               //
+ 100          ///////////////////////////////////////////////////////////////////////////////
+ 101          
+ 102          /**************************************************         
+ 103          Function: SPI_RW();                                         
+ 104                                                                      
+ 105          Description:                                                
+ 106            Writes one unsigned char to BK2421, and return the unsigned char read 
+ 107          /**************************************************/        
+ 108          unsigned char SPI_RW(unsigned char value)                                    
+ 109          {                                                           
+ 110   1        unsigned char bit_ctr;
+ 111   1        SCLK = 0;
+ 112   1        for(bit_ctr=0;bit_ctr<8;bit_ctr++)   // output 8-bit
+ 113   1        {
+ 114   2          if(value & 0x80)
+ 115   2          {
+C51 COMPILER V9.52.0.0   BK2421_INITIALIZE                                                 10/11/2019 09:21:57 PAGE 3   
+
+ 116   3            MOSI=1;
+ 117   3          }
+ 118   2          else
+ 119   2          {
+ 120   3            MOSI=0;   
+ 121   3          }
+ 122   2      
+ 123   2          value = (value << 1);           // shift next bit into MSB..
+ 124   2          SCLK = 1;                      // Set SCK high..
+ 125   2          if(MISO)
+ 126   2          value |=  0x01;               // capture current MISO bit
+ 127   2          SCLK = 0;                     // ..then set SCK low again
+ 128   2        }
+ 129   1        return(value);                  // return read unsigned char
+ 130   1      }                                                           
+ 131          /**************************************************/        
+ 132                                                                      
+ 133          /**************************************************         
+ 134          Function: SPI_Write_Reg();                                  
+ 135                                                                      
+ 136          Description:                                                
+ 137            Writes value 'value' to register 'reg'              
+ 138          /**************************************************/        
+ 139          void SPI_Write_Reg(unsigned char reg, unsigned char value)                 
+ 140          {
+ 141   1        CSN = 0;                   // CSN low, init SPI transaction
+ 142   1        op_status = SPI_RW(reg);      // select register
+ 143   1        SPI_RW(value);             // ..and write value to it..
+ 144   1        CSN = 1;                   // CSN high again
+ 145   1      }                                                           
+ 146          /**************************************************/        
+ 147                                                                      
+ 148          /**************************************************         
+ 149          Function: SPI_Read_Reg();                                   
+ 150                                                                      
+ 151          Description:                                                
+ 152            Read one unsigned char from BK2421 register, 'reg'     
+ 153          /**************************************************/        
+ 154          unsigned char SPI_Read_Reg(unsigned char reg)                               
+ 155          {                                                           
+ 156   1        unsigned char value;
+ 157   1        CSN = 0;                // CSN low, initialize SPI communication...
+ 158   1        op_status=SPI_RW(reg);            // Select register to read from..
+ 159   1        value = SPI_RW(0);    // ..then read register value
+ 160   1        CSN = 1;                // CSN high, terminate SPI communication
+ 161   1        return(value);        // return register value
+ 162   1      }                                                           
+ 163          /**************************************************/        
+ 164                                                                      
+ 165          /**************************************************/   
+ 166          //Function: SPI_Read_Buf();                  
+ 167          //Description:                                  
+ 168          //  Reads 'length' #of length from register 'reg'         
+ 169          /**************************************************/        
+ 170          void SPI_Read_Buf(unsigned char reg, unsigned char *pBuf, unsigned char length)     
+ 171          {                                                           
+ 172   1        unsigned char status,byte_ctr;                              
+ 173   1                                                                  
+ 174   1        CSN = 0;                        // Set CSN l
+ 175   1        status = SPI_RW(reg);           // Select register to write, and read status unsigned char
+ 176   1                                                                  
+ 177   1        for(byte_ctr=0;byte_ctr<length;byte_ctr++)           
+C51 COMPILER V9.52.0.0   BK2421_INITIALIZE                                                 10/11/2019 09:21:57 PAGE 4   
+
+ 178   1          pBuf[byte_ctr] = SPI_RW(0);    // Perform SPI_RW to read unsigned char from BK2421 
+ 179   1                                                                  
+ 180   1        CSN = 1;                           // Set CSN high again
+ 181   1                     
+ 182   1      }                                                           
+ 183          /**************************************************/        
+ 184                                                                      
+ 185          /**************************************************         
+ 186          Function: SPI_Write_Buf();                                  
+ 187                                                                      
+ 188          Description:                                                
+ 189            Writes contents of buffer '*pBuf' to BK2421         
+ 190          /**************************************************/        
+ 191          void SPI_Write_Buf(unsigned char reg, unsigned char *pBuf, unsigned char length)    
+ 192          {                                                           
+ 193   1        unsigned char byte_ctr;                              
+ 194   1                                                                  
+ 195   1        CSN = 0;                   // Set CSN low, init SPI tranaction
+ 196   1        op_status = SPI_RW(reg);    // Select register to write to and read status unsigned char
+ 197   1        for(byte_ctr=0; byte_ctr<length; byte_ctr++) // then write all unsigned char in buffer(*pBuf) 
+ 198   1          SPI_RW(*pBuf++);                                    
+ 199   1        CSN = 1;                 // Set CSN high again      
+ 200   1      
+ 201   1      }                                                           
+ 202          /**************************************************/        
+ 203          
+ 204          
+ 205          /**************************************************
+ 206          Function: SwitchToRxMode();
+ 207          Description:
+ 208            switch to Rx mode
+ 209          /**************************************************/
+ 210          void SwitchToRxMode(void)
+ 211          {
+ 212   1        unsigned char value;
+ 213   1      
+ 214   1        SPI_Write_Reg(FLUSH_RX,0);//flush Rx
+ 215   1      
+ 216   1        value=SPI_Read_Reg(STATUS); // read register STATUS's value
+ 217   1        SPI_Write_Reg(WRITE_REG|STATUS,value);// clear RX_DR or TX_DS or MAX_RT interrupt flag
+ 218   1      
+ 219   1        CE=0;
+ 220   1      
+ 221   1        value=SPI_Read_Reg(CONFIG); // read register CONFIG's value
+ 222   1      //PRX
+ 223   1        value=value|0x01;//set bit 1
+ 224   1          SPI_Write_Reg(WRITE_REG | CONFIG, value); // Set PWR_UP bit, enable CRC(2 length) & Prim:RX. RX_DR enab
+             -led..
+ 225   1      
+ 226   1        CE=1;
+ 227   1      }
+ 228          
+ 229          /**************************************************
+ 230          Function: SwitchToTxMode();
+ 231          Description:
+ 232            switch to Tx mode
+ 233          /**************************************************/
+ 234          void SwitchToTxMode(void)
+ 235          {
+ 236   1        unsigned char value;
+ 237   1        SPI_Write_Reg(FLUSH_TX,0);//flush Tx
+ 238   1      
+C51 COMPILER V9.52.0.0   BK2421_INITIALIZE                                                 10/11/2019 09:21:57 PAGE 5   
+
+ 239   1        CE=0;
+ 240   1        value=SPI_Read_Reg(CONFIG); // read register CONFIG's value
+ 241   1      //PTX
+ 242   1        value=value&0xfe;//set bit 0
+ 243   1        SPI_Write_Reg(WRITE_REG | CONFIG, value); // Set PWR_UP bit, enable CRC(2 length) & Prim:RX. RX_DR enabl
+             -ed.
+ 244   1      
+ 245   1        CE=1;
+ 246   1      }
+ 247          
+ 248          /**************************************************
+ 249          Function: SwitchCFG();
+ 250                                                                      
+ 251          Description:
+ 252             access switch between Bank1 and Bank0 
+ 253          
+ 254          Parameter:
+ 255            _cfg      1:register bank1
+ 256                      0:register bank0
+ 257          Return:
+ 258               None
+ 259          /**************************************************/
+ 260          void SwitchCFG(char _cfg)//1:Bank1 0:Bank0
+ 261          {
+ 262   1        unsigned char Tmp;
+ 263   1      
+ 264   1        Tmp=SPI_Read_Reg(7);
+ 265   1        Tmp=Tmp&0x80;
+ 266   1      
+ 267   1        if( ( (Tmp)&&(_cfg==0) )
+ 268   1        ||( ((Tmp)==0)&&(_cfg) ) )
+ 269   1        {
+ 270   2          SPI_Write_Reg(ACTIVATE_CMD,0x53);
+ 271   2        }
+ 272   1      }
+ 273          
+ 274          /**************************************************
+ 275          Function: SetChannelNum();
+ 276          Description:
+ 277            set channel number
+ 278          每通道的最小分辨率为1MHz
+ 279          /**************************************************/
+ 280          void SetChannelNum(unsigned char ch)
+ 281          {
+ 282   1        SPI_Write_Reg((unsigned char)(WRITE_REG|5),(unsigned char)(ch));
+ 283   1      }
+ 284          
+ 285          ///////////////////////////////////////////////////////////////////////////////
+ 286          //                  BK2421 initialization                                    //
+ 287          ///////////////////////////////////////////////////////////////////////////////
+ 288          /**************************************************         
+ 289          Function: BK2421_Initialize();                                  
+ 290          
+ 291          Description:                                                
+ 292            register initialization
+ 293          /**************************************************/   
+ 294          void BK2421_Initialize(void)
+ 295          {
+ 296   1        signed char i,j;
+ 297   1        unsigned char WriteArr[4];
+ 298   1        CSN = 1;
+ 299   1        SCLK  = 0;
+C51 COMPILER V9.52.0.0   BK2421_INITIALIZE                                                 10/11/2019 09:21:57 PAGE 6   
+
+ 300   1        CE  = 0;
+ 301   1      
+ 302   1        DelayMs(100);//delay more than 50ms.
+ 303   1        SwitchCFG(0);//point to bank0
+ 304   1        
+ 305   1        i=SPI_Read_Reg(29);
+ 306   1      //********************Write Bank0 register******************
+ 307   1        for(i=20;i>=0;i--)
+ 308   1          SPI_Write_Reg((WRITE_REG|Bank0_Reg[i][0]),Bank0_Reg[i][1]);
+ 309   1          i=SPI_Read_Reg(29);
+ 310   1      //reg 10 - Rx0 addr
+ 311   1        SPI_Write_Buf((WRITE_REG|RX_ADDR_P0),RX_P0_Addr,5);
+ 312   1        SPI_Write_Buf((WRITE_REG|RX_ADDR_P1),Work_Address,5);
+ 313   1      //REG 16 - TX addr
+ 314   1        SPI_Write_Buf((WRITE_REG|TX_ADDR),RX_P0_Addr,5);
+ 315   1        
+ 316   1      
+ 317   1      //REG 11 - Rx1 addr
+ 318   1        //SPI_Write_Buf((WRITE_REG|11),&Tx_Address[0],5);
+ 319   1      //  SPI_Write_Buf(0x20|11,&Tx_Address[0],5);
+ 320   1      
+ 321   1      
+ 322   1        i=SPI_Read_Reg(29);
+ 323   1      
+ 324   1        if(i==0) // i!=0 showed that chip has been actived.so do not active again.
+ 325   1          SPI_Write_Reg(ACTIVATE_CMD,0x73);// Active
+ 326   1      
+ 327   1        for(i=22;i>=21;i--)
+ 328   1          SPI_Write_Reg((WRITE_REG|Bank0_Reg[i][0]),Bank0_Reg[i][1]);
+ 329   1      
+ 330   1      //********************Write Bank1 register******************
+ 331   1        SwitchCFG(1);
+ 332   1      
+ 333   1        for(i=4;i<6;i++)    //  只写reg4,reg5   //for(i=0;i<=8;i++)
+ 334   1        {
+ 335   2          for(j=0;j<4;j++)
+ 336   2            WriteArr[j]=(Bank1_Reg0_13[i]>>(8*(j) ) )&0xff;
+ 337   2      
+ 338   2          SPI_Write_Buf((WRITE_REG|i),&(WriteArr[0]),4);
+ 339   2        }
+ 340   1        //SPI_Read_Buf(0x04,&(Tx_Buffer[0]),4);
+ 341   1        //SPI_Read_Buf(0x05,&(Tx_Buffer[0]),4);
+ 342   1        //SPI_Read_Buf(0x08,&(Tx_Buffer[0]),4);
+ 343   1        for(i=12;i<=13;i++)     //只写reg12,reg13 //for(i=9;i<=13;i++)
+ 344   1        {
+ 345   2          for(j=0;j<4;j++)
+ 346   2            WriteArr[j]=(Bank1_Reg0_13[i]>>(8*(3-j) ) )&0xff;
+ 347   2      
+ 348   2          SPI_Write_Buf((WRITE_REG|i),&(WriteArr[0]),4);
+ 349   2        }
+ 350   1        //SPI_Read_Buf(12,&(Tx_Buffer[0]),4);
+ 351   1        //SPI_Read_Buf(13,&(Tx_Buffer[0]),4);
+ 352   1        
+ 353   1        SPI_Write_Buf((WRITE_REG|14),&(Bank1_Reg14[0]),11);
+ 354   1      /*
+ 355   1      //toggle REG4<25,26>
+ 356   1        for(j=0;j<4;j++)
+ 357   1          WriteArr[j]=(Bank1_Reg0_13[4]>>(8*(j) ) )&0xff;
+ 358   1      
+ 359   1        WriteArr[0]=WriteArr[0]|0x06;
+ 360   1        SPI_Write_Buf((WRITE_REG|4),&(WriteArr[0]),4);
+ 361   1      
+C51 COMPILER V9.52.0.0   BK2421_INITIALIZE                                                 10/11/2019 09:21:57 PAGE 7   
+
+ 362   1        WriteArr[0]=WriteArr[0]&0xf9;
+ 363   1        SPI_Write_Buf((WRITE_REG|4),&(WriteArr[0]),4);
+ 364   1      
+ 365   1      */
+ 366   1        DelayMs(10);
+ 367   1      //********************switch back to Bank0 register access******************
+ 368   1        SwitchCFG(0);
+ 369   1        SwitchToRxMode();
+ 370   1      
+ 371   1      //  SPI_Write_Reg(WRITE_REG | CONFIG, 0xff);
+ 372   1        i=SPI_Read_Reg(CONFIG);
+ 373   1        i++;
+ 374   1      }
+ 375          //加载遥控数据
+ 376          u8 Load_RF_Date(unsigned char *pBuf, unsigned char length){
+ 377   1          /*xdata*/ u8 i,sum,cnt=0;
+ 378   1      
+ 379   1          sum=0;
+ 380   1      
+ 381   1          for(i=0;i<(length-1);i++){
+ 382   2              sum+=pBuf[i];
+ 383   2          
+ 384   2          }
+ 385   1          if(sum==pBuf[length-1])
+ 386   1          {cnt=0;
+ 387   2            memcpy((u8*)&Control, pBuf, length);
+ 388   2            Bind_On=0;//禁止对频
+ 389   2            Lost_time=0;
+ 390   2            Lost_Signal_f=0;
+ 391   2           }
+ 392   1          else
+ 393   1            cnt=1;
+ 394   1          return(cnt);
+ 395   1      }
+ 396          u8 Channel_Number=0;
+ 397          void  Work_Hop(void)
+ 398          {
+ 399   1        Channel_Number++;
+ 400   1        if(Channel_Number>3)
+ 401   1          Channel_Number  = 0;
+ 402   1      //  RF_Set_Chn(Work_Frequency[Channel_Number]);
+ 403   1        SPI_Write_Reg((WRITE_REG|Bank0_Reg[5][0]),Work_Frequency[Channel_Number]);
+ 404   1        SwitchToRxMode();
+ 405   1      }
+ 406          void Receive_Packet()
+ 407          {
+ 408   1        UINT8 len,sta,fifo_sta;
+ 409   1      
+ 410   1      
+ 411   1          Lost_time++;
+ 412   1          if((Lost_time%5==4)&&(Bind_On==0))
+ 413   1          {Work_Hop();}
+ 414   1           
+ 415   1      if(Lost_time>200)
+ 416   1      {Control.Throttle=1500;
+ 417   2       Control.Direc=1500;
+ 418   2        Lost_Signal_f=1;
+ 419   2         } 
+ 420   1        sta=SPI_Read_Reg(STATUS); // read register STATUS's value
+ 421   1        if(sta&0x70)        // if receive data ready (RX_DR) interrupt
+ 422   1        {   
+ 423   2          switch((sta>>1)&0x07)//判断是哪个通道数据
+C51 COMPILER V9.52.0.0   BK2421_INITIALIZE                                                 10/11/2019 09:21:57 PAGE 8   
+
+ 424   2          {
+ 425   3            case 0:fifo_sta=0;//对码通道
+ 426   3                     len=SPI_Read_Reg(R_RX_PL_WID_CMD);
+ 427   3                     SPI_Read_Buf(RD_RX_PLOAD,rx_buf,len);
+ 428   3                     if((rx_buf[0]==0xab)&&(rx_buf[1]==0xba)&&(Bind_On==1))
+ 429   3                     {SPI_Write_Buf((WRITE_REG|RX_ADDR_P1),rx_buf+2,5);
+ 430   4                      SPI_Write_Buf((WRITE_REG|TX_ADDR),rx_buf+2,5);
+ 431   4                        SPI_Write_Buf((WRITE_REG|TX_ADDR),rx_buf+2,5);
+ 432   4                       memcpy(Work_Address,rx_buf+2, 5);
+ 433   4                        Work_Frequency[0] = 6;    //6-21
+ 434   4                        Work_Frequency[1] = 23;   //23-38
+ 435   4                        Work_Frequency[2] = (Work_Address[0]&0x0f)+43;    //43-58
+ 436   4                        Work_Frequency[3] = (Work_Address[0]&0x0f)+60;    //60-75
+ 437   4                       WriteEeprom();
+ 438   4                      SwitchToRxMode();
+ 439   4                      }
+ 440   3      //      
+ 441   3              break;
+ 442   3            case 1:fifo_sta=1;//工作通道
+ 443   3                    Lost_time=0;
+ 444   3                     len=SPI_Read_Reg(R_RX_PL_WID_CMD);
+ 445   3                     SPI_Read_Buf(RD_RX_PLOAD,rx_buf,len);
+ 446   3                     Load_RF_Date(rx_buf,len);
+ 447   3                    
+ 448   3            
+ 449   3              break;
+ 450   3                }
+ 451   2      
+ 452   2               SPI_Write_Reg(WRITE_REG|STATUS,0x70); 
+ 453   2               SPI_Write_Reg(FLUSH_RX,0);
+ 454   2              
+ 455   2        }
+ 456   1      
+ 457   1      }
+ 458          
+ 459          //void RF_Task(void)
+ 460          //{
+ 461          //  static  unsigned int RF_Time;
+ 462          //  static  u8 Hop_Interval;
+ 463          //  if((System_Timer-RF_Time)>Hop_Interval)
+ 464          //    {//一个接收周期没有收到数据，也要跳频
+ 465          //      RF_Time = System_Timer;
+ 466          
+ 467          //      if(Bind)
+ 468          //        {//对码，固定12ms跳一次
+ 469          //          Hop_Interval  = 12;   //对码跳频3个频道，发射端每4ms发送一个频道
+ 470          //          Link_Hop();
+ 471          //        }
+ 472          //      else
+ 473          //        {//正常工作，连续4个周期没有收到数据，确定已经失去同步，启动长跳，否则短跳
+ 474          //          if(++Lost_Count>4)
+ 475          //            Hop_Interval  = 16;
+ 476          //          else
+ 477          //            Hop_Interval  = 4;
+ 478          //          Work_Hop();
+ 479          //        }
+ 480          //    }
+ 481          
+ 482          
+ 483          
+ 484          
+ 485          
+C51 COMPILER V9.52.0.0   BK2421_INITIALIZE                                                 10/11/2019 09:21:57 PAGE 9   
+
+ 486          
+ 487          
+ 488          
+ 489          
+ 490          
+ 491          
+ 492          
+ 493          
+ 494          
+ 495          
+ 496          
+ 497          
+ 498          
+ 499          
+ 500          
+ 501          //}
+ 502          
+ 503          
+ 504          
+ 505          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1571    ----
+   CONSTANT SIZE    =    123    ----
+   XDATA SIZE       =     51      23
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      2    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

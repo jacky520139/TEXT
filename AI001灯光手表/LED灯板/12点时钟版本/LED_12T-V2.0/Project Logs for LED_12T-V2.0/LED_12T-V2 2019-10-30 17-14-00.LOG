@@ -1,0 +1,74 @@
+Removed Pin From Net: NetName=GND Pin=-1
+Removed Pin From Net: NetName=BAT Pin=-2
+Removed Pin From Net: NetName=GND Pin=P1-1
+Removed Pin From Net: NetName=BAT Pin=P1-2
+Removed Pin From Net: NetName=LIGNT_VDD Pin=Q1-1
+Removed Pin From Net: NetName=POS_TEXT Pin=Q1-2
+Removed Pin From Net: NetName=GND Pin=Q1-3
+Removed Pin From Net: NetName=LIGNT_VDD Pin=R6-1
+Removed Pin From Net: NetName=POS_TEXT Pin=R6-2
+Removed Pin From Net: NetName=I2C_SDA Pin=R13-1
+Removed Pin From Net: NetName=BAT Pin=R13-2
+Removed Pin From Net: NetName=I2C_SCL Pin=R14-1
+Removed Pin From Net: NetName=KEY Pin=RESET-1
+Removed Pin From Net: NetName=KEY Pin=U2-4
+Removed Pin From Net: NetName=GND Pin=U3-1
+Removed Member From Class: ClassName=LED_12T-V1.1 Member=P1
+Removed Member From Class: ClassName=LED_12T-V1.1 Member=Q1
+Removed Member From Class: ClassName=LED_12T-V1.1 Member=R6
+Change Component DesignItemId : Designator=C1 Old DesignItemId= New DesignItemId=C
+Change Component DesignItemId : Designator=R1 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=R2 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=R3 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=R4 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=R5 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=R13 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=R14 Old DesignItemId= New DesignItemId=R
+Change Component DesignItemId : Designator=K2 Old DesignItemId= New DesignItemId=SW-02
+Change Component DesignItemId : Designator=BAT Old DesignItemId= New DesignItemId=≤‚ ‘µ„
+Change Component DesignItemId : Designator=CLK Old DesignItemId= New DesignItemId=≤‚ ‘µ„
+Change Component DesignItemId : Designator=DAT Old DesignItemId= New DesignItemId=≤‚ ‘µ„
+Change Component DesignItemId : Designator=GND Old DesignItemId= New DesignItemId=≤‚ ‘µ„
+Change Component DesignItemId : Designator=RESET Old DesignItemId= New DesignItemId=≤‚ ‘µ„
+Change Component DesignItemId : Designator=RXD Old DesignItemId= New DesignItemId=≤‚ ‘µ„
+Change Component DesignItemId : Designator=TXD Old DesignItemId= New DesignItemId=≤‚ ‘µ„
+Change Component DesignItemId : Designator=U2 Old DesignItemId=N76 New DesignItemId=N76E003
+Change Component DesignItemId : Designator=U3 Old DesignItemId=SC New DesignItemId=SC7A21
+Change Component Comment : Designator=R13 Old Comment=4.7K New Comment=1M
+Change Component Comment : Designator=R14 Old Comment=4.7K New Comment=1M
+Change Component Comment : Designator=GND Old Comment=≤‚ ‘µ„ New Comment=-
+Change Component Designator: OldDesignator=BAT NewDesignator=3V3
+Change Component Description : Designator=C18 Old Description=Capacit New Description=Capacitor
+Change Component Description : Designator=C19 Old Description=Capacit New Description=Capacitor
+Added Component: Designator=BAT(≤‚ ‘µ„)
+Added Component: Designator=GND1(≤‚ ‘µ„)
+Added Component: Designator=RE1(«·¥•ø™πÿ 2x4)
+Added Pin To Net: NetName=BAT Pin=BAT-1
+Added Pin To Net: NetName=GND Pin=GND1-1
+Added Pin To Net: NetName=BAT Pin=R13-1
+Added Pin To Net: NetName=KEY Pin=R13-2
+Added Pin To Net: NetName=GND Pin=RE1-2
+Added Pin To Net: NetName=NetLED12_1 Pin=RESET-1
+Added Pin To Net: NetName=NetLED12_1 Pin=U2-4
+Added Pin To Net: NetName=BAT Pin=U3-1
+Change Net Name : Old Net Name=NetLED12_1 New Net Name=RESET
+Added Pin To Net: NetName=KEY1 Pin=R14-1
+Added Pin To Net: NetName=KEY1 Pin=RE1-1
+Added Net: Name=KEY1
+Change Class Name : Old Net Name=LED_12T-V1.1 New Net Name=LED_12T-V2.0
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component BAT +
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component GND1 ≤‚ ‘µ„
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component LED1 LED
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component LED2 LED
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component LED3 LED
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component LED4 LED
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component LED5 LED
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component LED6 LED
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component LED7 LED
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component LED8 LED
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component LED9 LED
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component LED10 LED
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component LED11 LED
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component LED12 LED
+Added Member To Class: ClassName=LED_12T-V2.0 Member=Component RE1 KEY_M
+Added Room: Name=LED_12T-V2.0

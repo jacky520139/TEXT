@@ -1,0 +1,153 @@
+C51 COMPILER V9.52.0.0   WORK                                                              10/31/2019 17:34:50 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE WORK
+OBJECT MODULE PLACED IN ..\Output\Work.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Code\Work.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..\C
+                    -ommon;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\LST\Work.lst) TABS(2) OBJECT(..\Output\Work.obj)
+
+line level    source
+
+   1          
+   2          #include "ALL_Includes.h"
+   3          #define SaveCount     10
+   4          u16 EEPROM_DATA[SaveCount];
+   5          
+   6          u8 TIME_MIN=0;//1分钟时间
+   7          u8 LED_Bri=3;//led的亮度
+   8          u8 LED_OPEN_T=Default_LED_OPEN_T;
+   9          u8 LED_CLOSE_T=Default_LED_CLOSE_T;
+  10          u8 LED_OPEN_Time=Default_LED_OPEN_Time;
+  11          u8 Work_Mode=1;
+  12          /***************************************************************
+  13          * 函数功能：写入工作参数
+  14          * 输入参数：
+  15          * 输出参数：
+  16          ***************************************************************/    
+  17          void WriteEeprom(void)
+  18          {
+  19   1      ////////////////////写入工作参数///////////////////////////// 
+  20   1      //  EEPROM_DATA[0]=Software_NO;
+  21   1      //  EEPROM_DATA[1]=Work_Address[0];
+  22   1      //  EEPROM_DATA[2]=Work_Address[1];
+  23   1      //  EEPROM_DATA[3]=Work_Address[2];
+  24   1      //  EEPROM_DATA[4]=Work_Address[3];
+  25   1      //  EEPROM_DATA[5]=Work_Address[4];
+  26   1        
+  27   1        writerom(EEPROM_DATA,SaveCount);
+  28   1      } 
+  29          /***************************************************************
+  30          * 函数名称void ParameterReset(void)
+  31          * 函数功能：重置参数
+  32          * 输入参数无
+  33          * 输出参数：无
+  34          ***************************************************************/
+  35          void ParameterReset(void)
+  36          { 
+  37   1      //  Work_Address[0]=0xf1;
+  38   1      //  Work_Address[1]=0xf2;
+  39   1      //  Work_Address[2]=0xf3;
+  40   1      //  Work_Address[3]=0xf4;
+  41   1      //  Work_Address[4]=0xf5;
+  42   1        WriteEeprom();
+  43   1        readrom(EEPROM_DATA,SaveCount); 
+  44   1      
+  45   1      }
+  46          
+  47          /***************************************************************
+  48          * 函数名称void ReadEeprom(void)
+  49          * 函数功能：读取工作参数
+  50          * 输入参数无
+  51          * 输出参数：无
+  52          ***************************************************************/
+  53          u8 ReadEeprom(void)
+  54          {
+C51 COMPILER V9.52.0.0   WORK                                                              10/31/2019 17:34:50 PAGE 2   
+
+  55   1      //   readrom(EEPROM_DATA,SaveCount);
+  56   1      //  if(EEPROM_DATA[0]!=Software_NO)//初片设置出厂数据"14代表版本号"  
+  57   1      //  {
+  58   1      //    ParameterReset();
+  59   1      //   if(EEPROM_DATA[0]!=Software_NO)
+  60   1      //   return 1;}    
+  61   1      //    ////////////////////读取工作参数////////////////////////////////
+  62   1      //  Work_Address[0]=EEPROM_DATA[1];
+  63   1      //  Work_Address[1]=EEPROM_DATA[2];
+  64   1      //  Work_Address[2]=EEPROM_DATA[3];
+  65   1      //  Work_Address[3]=EEPROM_DATA[4];
+  66   1      //  Work_Address[4]=EEPROM_DATA[5];
+  67   1       
+  68   1         return 0;
+  69   1          }
+  70          
+  71          
+  72          
+  73          
+  74           code u8 LED_MA[13]={0X33,0X93,0XA3,0XB1,0X17,0X27,0X35,0X36,0X1B,0X2B,0X39,0X3A,0XB2};
+  75           u8 LED_CNT=1;
+  76           u8 TIME_S=0;
+  77           u8 LED_T;
+  78           bit LED_state=0;
+  79           void Scan_LED1(void)
+  80           {static u8 STEP=1;
+  81   1      switch(STEP)
+  82   1         {
+  83   2           case 1:
+  84   2            RELOAD_RWK(Default_LED_OPEN_T);
+  85   2           // if(TIME_S&0x01)
+  86   2            P0=LED_MA[(TIME_S%12)+1];
+  87   2      //         LED_state=1;
+  88   2            STEP++;
+  89   2           break;
+  90   2           case 2:
+  91   2            RELOAD_RWK(Default_LED_CLOSE_T);
+  92   2           LED_state=0;
+  93   2      //      P0=LED_MA[0];
+  94   2            
+  95   2           TIME_S++;
+  96   2           if(TIME_S>=60)
+  97   2           {TIME_S=0;
+  98   3            TIME_MIN++;}
+  99   2           STEP--;
+ 100   2           break;
+ 101   2      }
+ 102   1        clr_WKTF;
+ 103   1       }
+ 104            u8 LED_Duty=2,LED_cycle=5;   
+ 105          
+ 106           void LED_Ctrl(void)
+ 107           { u8 i,temp,temp2;
+ 108   1         if(LED_state==1)
+ 109   1         {temp=(TIME_S%12)+1;
+ 110   2          temp2=LED_cycle-LED_Duty;}
+ 111   1         while(LED_state==1)
+ 112   1       { 
+ 113   2        for(i=0;i<LED_Duty;i++) 
+ 114   2        {P0=LED_MA[temp];}
+ 115   2        for(i=0;i<temp2;i++)
+ 116   2        {
+C51 COMPILER V9.52.0.0   WORK                                                              10/31/2019 17:34:50 PAGE 3   
+
+ 117   3         P0=LED_MA[0];
+ 118   3        }
+ 119   2       }
+ 120   1      
+ 121   1       }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    207    ----
+   CONSTANT SIZE    =     13    ----
+   XDATA SIZE       =     32    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,16 @@
+".\Output\STARTUP.obj",
+".\Output\System.obj",
+".\Output\main.obj",
+".\Output\adc.obj",
+".\Output\BK2421_Initialize.obj",
+".\Output\curve.obj",
+".\Output\eeprom.obj",
+".\Output\motion.obj",
+".\Output\pid.obj",
+".\Output\Work.obj",
+".\Output\PWM.obj",
+".\Output\UART.obj",
+".\Output\LT8920.obj" 
+TO ".\Output\PWM" 
+
+PRINT(".\LST\PWM.map") DISABLEWARNING (16) 

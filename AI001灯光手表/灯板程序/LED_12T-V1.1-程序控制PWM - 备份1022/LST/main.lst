@@ -1,0 +1,90 @@
+C51 COMPILER V9.52.0.0   MAIN                                                              10/24/2019 16:40:53 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN ..\Output\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Code\main.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..\C
+                    -ommon;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\LST\main.lst) TABS(2) OBJECT(..\Output\main.obj)
+
+line level    source
+
+   1          
+   2          #include "ALL_Includes.h"
+   3          bit SL_SC7A21_Click_Timer_Cnt_f=0;
+   4           void SL_Open_Sc7a21_Click_Timer(void)
+   5           {SL_SC7A21_Click_Timer_Cnt_f=1;}
+   6           void SL_Close_Sc7a21_Click_Timer(void)
+   7           {SL_SC7A21_Click_Timer_Cnt_f=0;}
+   8          void main (void)
+   9          {   signed short x_agg,y_agg,z_agg; 
+  10   1        u8 Click_count;
+  11   1        u8 SL_SC7A21_Click_Timer_Count=0;
+  12   1        InitSystem();
+  13   1      
+  14   1      
+  15   1        while(1)
+  16   1        {   
+  17   2      //    P0M2|=0x20; 
+  18   2      //      P0M1&=~0x20;    
+  19   2      //    
+  20   2      //    AINDIDS=Bin(00000000);  
+  21   2      //    Lignt_IN=0;
+  22   2      //    set_PD;//进入休眠   
+  23   2          SysTimer_Process();
+  24   2            if(bsystem2Msec)
+  25   2            {
+  26   3        
+  27   3              SL_SC7A21_Read_XYZ_FIFO_Data(&x_agg,&y_agg,&z_agg);
+  28   3              ANO_DT_Send_Version(0XF1, x_agg, y_agg,z_agg , 0, 0);
+  29   3            }
+  30   2          if(bsystem5Msec)
+  31   2          { 
+  32   3      //      EA=0;
+  33   3      //      set_PD;//进入休眠   
+  34   3            }
+  35   2          if(bsystem10Msec)
+  36   2          {
+  37   3            if(SL_SC7A21_Click_Timer_Cnt_f)
+  38   3            {SL_SC7A21_Click_Timer_Count++;
+  39   4              if(SL_SC7A21_Click_Timer_Count==5)
+  40   4              {SL_SC7A21_Click_Timer_Count=0;
+  41   5               Click_count=SL_SC7A21_Click_Timer_Cnt();
+  42   5            ANO_DT_Send_Version(0XF1, x_agg, y_agg,z_agg , Click_count, 0);}}
+  43   3          
+  44   3           }
+  45   2            if(bsystem500Msec)
+  46   2              { 
+  47   3                SL_SC7A21_GET_PEDO_VALUE();
+  48   3                
+  49   3                          }
+  50   2                    
+  51   2            if(bsystem1Sec)
+  52   2              { 
+  53   3              //  EA=0;
+  54   3                //set_PD;//进入休眠 
+C51 COMPILER V9.52.0.0   MAIN                                                              10/24/2019 16:40:53 PAGE 2   
+
+  55   3      
+  56   3                          }
+  57   2      
+  58   2        }   
+  59   1      }
+  60          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    211    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       7
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

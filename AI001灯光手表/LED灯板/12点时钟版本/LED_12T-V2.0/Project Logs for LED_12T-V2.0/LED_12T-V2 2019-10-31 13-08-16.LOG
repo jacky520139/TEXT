@@ -1,0 +1,11 @@
+Removed Pin From Net: NetName=GND Pin=GND1-1
+Removed Pin From Net: NetName=LIGNT_IN Pin=R6-1
+Removed Pin From Net: NetName=GND Pin=R6-2
+Removed Pin From Net: NetName=INT1 Pin=U2-6
+Added Component: Designator=GND1(≤‚ ‘µ„)
+Added Pin To Net: NetName=GND Pin=GND1-1
+Added Pin To Net: NetName=KEY1 Pin=U2-13
+Added Pin To Net: NetName=KEY2 Pin=U2-15
+Change Net Name : Old Net Name=LIGNT_IN New Net Name=LIGNT_IN1
+Change Net Name : Old Net Name=POS_TEXT New Net Name=TXD
+Added Room: Name=LED_12T-V2.0

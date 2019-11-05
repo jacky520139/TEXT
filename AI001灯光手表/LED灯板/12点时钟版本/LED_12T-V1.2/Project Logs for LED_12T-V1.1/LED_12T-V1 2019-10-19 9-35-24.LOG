@@ -1,0 +1,10 @@
+Added Component: Designator=Q1(SOT-23)
+Added Component: Designator=R6(0402_R)
+Added Pin To Net: NetName=GND Pin=Q1-1
+Added Pin To Net: NetName=LIGNT_VDD Pin=Q1-2
+Added Pin To Net: NetName=LIGNT_VDD Pin=R6-1
+Added Pin To Net: NetName=NetQ1_3 Pin=Q1-3
+Added Pin To Net: NetName=NetQ1_3 Pin=R6-2
+Added Net: Name=NetQ1_3
+Added Member To Class: ClassName=LED_12T-V1.1 Member=Component Q1 2N3904
+Added Member To Class: ClassName=LED_12T-V1.1 Member=Component R6 1M

@@ -1,0 +1,135 @@
+C51 COMPILER V9.52.0.0   ADC                                                               10/16/2019 15:31:46 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE ADC
+OBJECT MODULE PLACED IN .\Output\adc.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE Code\adc.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) BROWSE INCDIR(..\..\In
+                    -clude;.\head;.\Common;.\LIB) DEFINE(FOSC_160000) DEBUG PRINT(.\LST\adc.lst) TABS(2) OBJECT(.\Output\adc.obj)
+
+line level    source
+
+   1          
+   2          
+   3          #include "ALL_Includes.h"
+   4          
+   5          
+   6          
+   7          
+   8           u8 adc_position_ready;
+   9           u16 adc_position_value;
+  10          // u8 adc_voltage_needed;
+  11          u16 adc_seek_position_value;
+  12          
+  13          
+  14          
+  15          void adc_init(void)
+  16          {
+  17   1      
+  18   1          adc_position_ready = 0;
+  19   1          adc_position_value = 0;
+  20   1          ADCCON1|=0x01;//打开ADC电源
+  21   1          AINDIDS=Bin(10001010);  
+  22   1          EADC=1;//使能ADC中断
+  23   1      }
+  24          /***************************************************************
+  25          * 函数功能：ADC开始采样（10ms调用一次）
+  26          * 输入参数：
+  27          * 输出参数：
+  28          ***************************************************************/
+  29          void ADC_GO(void)
+  30          {
+  31   1        ADCCON0=(ADC_CHANNEL_CURRENT&0x0f);
+  32   1        ADCF=0;
+  33   1        ADCS=1;
+  34   1      }
+  35          bit full=0;
+  36           _Filt_Dev ADC_Filt;//创建反电动势滤波
+  37          void INIT_Filter(_Filt_Dev* Filt_Dev,u8 Depth)
+  38          {   u8 i = 0;
+  39   1      
+  40   1          Filt_Dev->Count = 0;
+  41   1          Filt_Dev->Depth = Depth;
+  42   1          for(i = 0; i < Depth; i++)
+  43   1          {
+  44   2              Filt_Dev->Buff[i] = 0;
+  45   2          }
+  46   1          Filt_Dev->Date_Sun=0;
+  47   1      
+  48   1      }
+  49          
+  50          /***************************************************************
+  51          * 函数功能：滤波器
+  52          * 输入参数：
+  53          * 输出参数：
+  54          ***************************************************************/
+C51 COMPILER V9.52.0.0   ADC                                                               10/16/2019 15:31:46 PAGE 2   
+
+  55          
+  56          u16 Filter(_Filt_Dev* Filt_Dev, u16 date)
+  57          {       u16 Aver_date = 0;
+  58   1              Filt_Dev->Date_Sun -= Filt_Dev->Buff[Filt_Dev->Count];
+  59   1              Filt_Dev->Buff[Filt_Dev->Count]=date;
+  60   1              Filt_Dev->Date_Sun += date;
+  61   1              Filt_Dev->Count++;
+  62   1              if(Filt_Dev->Count == Filt_Dev->Depth)
+  63   1              {   Filt_Dev->Count = 0;
+  64   2                  full=1;
+  65   2              }
+  66   1              if(full)
+  67   1              Aver_date = Filt_Dev->Date_Sun / Filt_Dev->Depth;
+  68   1              else
+  69   1              {Aver_date=date;}
+  70   1             return   Aver_date;
+  71   1      }
+  72          /***************************************************************
+  73          * 函数功能：ADC中断服务函数
+  74          * 输入参数：
+  75          * 输出参数：
+  76          ***************************************************************/
+  77          
+  78          void ADC_ISR (void) interrupt 11  
+  79          {
+  80   1          u16 new_value =(ADCRH<<4)+(ADCRL&0x0f);
+  81   1                        
+  82   1          ADCF=0;
+  83   1          switch (ADCCON0 & 0x0f)
+  84   1          {
+  85   2      
+  86   2              case ADC_CHANNEL_POSITION:
+  87   2      
+  88   2                  break;
+  89   2      
+  90   2      
+  91   2      
+  92   2              case ADC_CHANNEL_CURRENT:
+  93   2      
+  94   2                   break;
+  95   2              case ADC_CHANNEL_VOLTAGE:
+  96   2            
+  97   2                   ADCCON0=(ADC_CHANNEL_POSITION&0x0f);
+  98   2                   ADCS=1;        
+  99   2                   break;   
+ 100   2            
+ 101   2          }
+ 102   1           
+ 103   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    619    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    141      12
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+C51 COMPILER V9.52.0.0   ADC                                                               10/16/2019 15:31:46 PAGE 3   
+
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

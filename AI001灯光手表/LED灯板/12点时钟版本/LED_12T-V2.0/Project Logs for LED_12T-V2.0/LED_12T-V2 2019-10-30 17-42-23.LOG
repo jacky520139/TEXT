@@ -1,0 +1,4 @@
+Removed Pin From Net: NetName=GND Pin=GND1-1
+Added Component: Designator=GND1(≤‚ ‘µ„)
+Added Pin To Net: NetName=GND Pin=GND1-1
+Added Room: Name=LED_12T-V2.0

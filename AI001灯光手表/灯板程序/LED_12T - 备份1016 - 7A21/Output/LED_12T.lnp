@@ -1,0 +1,15 @@
+".\Output\STARTUP.obj",
+".\Output\System.obj",
+".\Output\main.obj",
+".\Output\adc.obj",
+".\Output\eeprom.obj",
+".\Output\Work.obj",
+".\Output\UART.obj",
+".\Output\SC7A21.obj",
+".\Output\i2c_software.obj",
+".\Output\SL_Watch_Pedo_Application.obj",
+".\Output\iic.obj",
+".\LIB\SL_Watch_Pedo_Algorithm.lib" 
+TO ".\Output\LED_12T" 
+
+PRINT(".\LST\LED_12T.map") DISABLEWARNING (16) 

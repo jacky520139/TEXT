@@ -1,0 +1,219 @@
+C51 COMPILER V9.52.0.0   SL_SC7A21_APPLICATION                                             10/19/2019 14:09:51 PAGE 1   
+
+
+C51 COMPILER V9.52.0.0, COMPILATION OF MODULE SL_SC7A21_APPLICATION
+OBJECT MODULE PLACED IN ..\Output\SL_SC7A21_Application.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\Code\SL_SC7A21_Application.c LARGE OBJECTADVANCED OPTIMIZE(7,SPEED) B
+                    -ROWSE INCDIR(..\Common;..\head) DEFINE(FOSC_160000) DEBUG PRINT(..\LST\SL_SC7A21_Application.lst) TABS(2) OBJECT(..\Outp
+                    -ut\SL_SC7A21_Application.obj)
+
+line level    source
+
+   1          
+   2          
+   3          #include "ALL_Includes.h"
+   4          
+   5          #define SL_Sensor_Algo_Release_Enable 1
+   6          #if SL_Sensor_Algo_Release_Enable==0
+              extern signed short          SL_DEBUG_DATA[9][128];
+              extern unsigned char         SL_DEBUG_DATA_LEN;
+              #endif
+  10          
+  11          static unsigned char   SL_SLEEP             = 0;
+  12          static unsigned short  sl_sleep_cnt         = 0;
+  13          static unsigned short  sl_sleep_flag        = 0;
+  14          static unsigned char   SL_DEBUG_SLEEP       = 0;
+  15          
+  16          static unsigned char   SL_WRIST      = 0;
+  17          
+  18          /**请根据实际情况修改以下参数**/
+  19          signed char SL_SC7A21_INIT(void)
+  20          {
+  21   1          unsigned char  status=0;
+  22   1       
+  23   1          unsigned char pedo_para[7] ={0x05,0xA4,0x1F,0x37,0x0F,0xFF,0x00};
+  24   1          unsigned char wrist_para[4]={0x31,0x31,0x00,0x93};
+  25   1          unsigned char sleep_para[2]={0x11,0x09}; 
+  26   1          unsigned char int_para     =0x02;//default int level set high,int output mode set pushpull  
+  27   1          
+  28   1      /*****if use spi mode please config first******/    
+  29   1      #if SL_SC7A21_SPI_IIC_MODE == 0//spi
+                  //disable SDO & SDA & SCL PULL-UP Resistance
+                  status=SL_SC7A21_Online_Test(SL_SC7A21_SDO_I2C_DIS);//pull up config
+              #else
+  33   1          status=SL_SC7A21_Online_Test(SL_SC7A21_SDO_PU_DIS);//pull up config
+  34   1      #endif
+  35   1          /**********set sc7a21 full-scale**********/
+  36   1          status=SL_SC7A21_FS_Config(SL_SC7A21_DATA_FS_4G);
+  37   1          /**********set sc7a21 odr and power mode**********/
+  38   1          status=SL_SC7A21_Power_Config(SL_SC7A21_ODR_50HZ,SL_SC7A21_LOWER_POWER);
+  39   1          /**********set sc7a21 FIFO MODE and 8BITS FIFO MODE**********/ 
+  40   1          status=SL_SC7A21_FIFO_Config(SL_SC7A21_FIFO_MODE_EN,SL_SC7A21_FIFO_8BITS_MODE);
+  41   1          /**********set sc7a21 INT LEVEL AND INT MODE**********/ 
+  42   1          status=SL_SC7A21_INT_Config(int_para);   
+  43   1          /**********10h 18h 19h 1Ah 11h 12h 13h  Total:7**********/
+  44   1          SL_SC7A21_Pedo_Config(&pedo_para[0]);
+  45   1          /**********08h 09h 0Ah 0Bh  Total:4**********/
+  46   1          SL_SC7A21_Wrist_Config(&wrist_para[0]);
+  47   1          /**********6Bh 6Ch   Total:2****************/
+  48   1          //must open this function an hour early
+  49   1          SL_SC7A21_Sleep_Config(&sleep_para[0]);
+  50   1          sl_sleep_flag = 0;
+  51   1      
+  52   1        return status;
+  53   1      }
+C51 COMPILER V9.52.0.0   SL_SC7A21_APPLICATION                                             10/19/2019 14:09:51 PAGE 2   
+
+  54          
+  55          //定时1min 调用一次
+  56          #define SL_SC7A21_SLEEP_WAKE_TH    2//0-1-2
+  57          #define SL_SC7A21_SLEEP_LIGHT_TH   5//3-4-5
+  58          #define SL_SC7A21_SLEEP_DEEP_TH    7//6-7 
+  59          
+  60          unsigned char  SL_SC7A21_GET_SLEEP_VALUE(void)
+  61          {
+  62   1          unsigned char   sl_sleep_status      = 0;
+  63   1          
+  64   1          sl_sleep_status =  SL_SC7A21_Get_Sleep_Status();
+  65   1          SL_DEBUG_SLEEP  =  sl_sleep_status;
+  66   1          if(sl_sleep_flag==0)//pre-judge
+  67   1          {
+  68   2              if(sl_sleep_status>1)
+  69   2              {
+  70   3                  sl_sleep_cnt++;
+  71   3                  if(sl_sleep_cnt>20)//already 20min
+  72   3                  {
+  73   4                      sl_sleep_cnt=0;
+  74   4                      sl_sleep_flag=1;
+  75   4                      return  sl_sleep_status/2;           
+  76   4                  }
+  77   3                  else
+  78   3                      return 0;//wake status
+  79   3              }
+  80   2              else
+  81   2              {
+  82   3                  sl_sleep_cnt =0;
+  83   3                  sl_sleep_flag=1;
+  84   3              }
+  85   2          }
+  86   1      
+  87   1          if(sl_sleep_status<=SL_SC7A21_SLEEP_WAKE_TH)
+  88   1          {
+  89   2              return 0;//wake status
+  90   2          }
+  91   1          else if(sl_sleep_status<=SL_SC7A21_SLEEP_LIGHT_TH)
+  92   1          {
+  93   2              return 1;//light status
+  94   2          }
+  95   1          else
+  96   1          {
+  97   2              return 2;//deep status
+  98   2          }
+  99   1      
+ 100   1          return sl_sleep_status;
+ 101   1      }
+ 102          
+ 103          //GPIO中断中调用
+ 104          /***SC7A21 INT1 INT2中断服务函数中，读取抬手状态***/
+ 105          //return 0: no action
+ 106          //return 1: turn on   success
+ 107          //return 2: turn down success
+ 108          unsigned char  SL_SC7A21_WRIST_INT12_SERVICE_FUNCTION(void)
+ 109          {
+ 110   1          SL_WRIST=SL_SC7A21_Get_Wrist_Status();
+ 111   1          return   SL_WRIST;
+ 112   1      }
+ 113          
+ 114          //定时1s或0.5s调用一次
+ 115          //#define SL_SC7A21_TIMER_INTERVAL   1000
+C51 COMPILER V9.52.0.0   SL_SC7A21_APPLICATION                                             10/19/2019 14:09:51 PAGE 3   
+
+ 116          #define SL_SC7A21_TIMER_INTERVAL   500
+ 117          static unsigned char sc7a21_timer_counter=0;   
+ 118          static unsigned int  SL_STEP            = 0;
+ 119          unsigned int  SL_SC7A21_GET_PEDO_VALUE(void)
+ 120          {
+ 121   1      #if SL_Sensor_Algo_Release_Enable==0
+                unsigned char         sl_i;
+              #endif
+ 124   1        
+ 125   1      #if   SL_SC7A21_FIFO_16BIT_8BIT==0
+ 126   1        signed char  SC7A21_XYZ_Buf[3][64];
+ 127   1      #elif SL_SC7A21_16BIT_8BIT==1
+                signed short SC7A21_XYZ_Buf[3][32];
+              #endif
+ 130   1        unsigned char         SC7A21_FIFO_NUM;
+ 131   1          
+ 132   1          /*******get accel orginal fifo data and length*******/
+ 133   1      #if   SL_SC7A21_FIFO_16BIT_8BIT==0
+ 134   1          SC7A21_FIFO_NUM=SL_SC7A21_Read_XYZ_FIFO_Data(&SC7A21_XYZ_Buf[0][0],&SC7A21_XYZ_Buf[1][0],&SC7A21_XYZ_B
+             -uf[2][0]);
+ 135   1      #elif SL_SC7A21_16BIT_8BIT==1
+                  SC7A21_FIFO_NUM=SL_SC7A21_Read_XYZ_FIFO_Data(&SC7A21_XYZ_Buf[0][0],&SC7A21_XYZ_Buf[1][0],&SC7A21_XYZ_B
+             -uf[2][0]);
+              #endif
+ 138   1      
+ 139   1          /*******get pedo value******/
+ 140   1          SL_STEP= SL_SC7A21_Get_Pedo_Count();//读计步值
+ 141   1      
+ 142   1          if(SL_STEP>200)
+ 143   1          {
+ 144   2              /**reset pedo value,just for example**/
+ 145   2              SL_SC7A21_Pedo_Reset();
+ 146   2          }
+ 147   1          
+ 148   1          sc7a21_timer_counter++; 
+ 149   1      #if   SL_SC7A21_TIMER_INTERVAL==500
+ 150   1          if(sc7a21_timer_counter>=120)
+ 151   1          {
+ 152   2              SL_SLEEP=SL_SC7A21_GET_SLEEP_VALUE();
+ 153   2              sc7a21_timer_counter=0;
+ 154   2          } 
+ 155   1      #elif SL_SC7A21_TIMER_INTERVAL==1000
+                  if(sc7a21_timer_counter>=60)
+                  {
+                      SL_SLEEP=SL_SC7A21_GET_SLEEP_VALUE();
+                      sc7a21_timer_counter=0;
+                  } 
+              #endif
+ 162   1          
+ 163   1      #if SL_Sensor_Algo_Release_Enable==0
+                  for(sl_i=0;sl_i<SC7A21_FIFO_NUM;sl_i++)
+                  {       
+                      SL_DEBUG_DATA[0][sl_i]=SC7A21_XYZ_Buf[0][sl_i];
+                      SL_DEBUG_DATA[1][sl_i]=SC7A21_XYZ_Buf[1][sl_i];
+                      SL_DEBUG_DATA[2][sl_i]=SC7A21_XYZ_Buf[2][sl_i];
+                      SL_DEBUG_DATA[3][sl_i]=SL_SLEEP;
+                      SL_DEBUG_DATA[4][sl_i]=SL_DEBUG_SLEEP;
+                      SL_DEBUG_DATA[5][sl_i]=SL_STEP;
+                      SL_DEBUG_DATA[6][sl_i]=SL_WRIST;   
+                  }
+                  SL_DEBUG_DATA_LEN=SC7A21_FIFO_NUM;
+                  SL_WRIST = 0;//Clear this para
+C51 COMPILER V9.52.0.0   SL_SC7A21_APPLICATION                                             10/19/2019 14:09:51 PAGE 4   
+
+              #endif
+ 177   1          
+ 178   1          return SL_STEP;
+ 179   1      }
+ 180          
+ 181          
+ 182          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    397    ----
+   CONSTANT SIZE    =     13    ----
+   XDATA SIZE       =     10     208
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
